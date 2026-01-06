@@ -1,0 +1,68 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Broadcast;
+
+// Redirect / to dashboard
+Route::get('/', function () {
+    if (Auth::check()) {
+        $userType = Auth::user()->type;
+        switch ($userType) {
+            case 'admin':
+                return redirect()->route('admin.dashboard');
+            case 'consultant':
+                return redirect()->route('consultant.dashboard');
+            case 'contractor':
+                return redirect()->route('contractor.dashboard');
+            default:
+                return redirect()->route('admin.dashboard');
+        }
+    }
+
+    return redirect()->route('admin.login-form');
+});
+
+// ------------------ Admin Auth ------------------
+Route::group(['namespace' => 'Dashboard\Auth', 'middleware' => 'set_locale'], function () {
+    Route::get('admin/login', 'AdminAuthController@showLoginForm')->name('admin.login-form');
+    Route::post('admin/login', 'AdminAuthController@login')->name('admin.login');
+    Route::post('admin/logout', 'AdminAuthController@logout')->name('admin.logout');
+});
+
+// ------------------ User Login ------------------
+Route::get('/user/login/form', function () {
+    $user  = \App\Models\User::find(12);
+    Auth::login($user);
+    return view('auth.userLogin');
+});
+Route::post('/user/login', function (Request $request) {
+    return redirect('/chat');
+})->name('user.login');
+
+
+
+// ------------------ Broadcast ------------------
+Route::middleware('auth:sanctum')->group(function () {
+    Broadcast::routes();
+});
+
+// ------------------ Catch-All Fallback ------------------
+Route::fallback(function () {
+    if (Auth::check()) {
+        $userType = Auth::user()->type;
+        switch ($userType) {
+            case 'admin':
+                return redirect()->route('admin.dashboard');
+            case 'consultant':
+                return redirect()->route('consultant.dashboard');
+            case 'contractor':
+                return redirect()->route('contractor.dashboard');
+            default:
+                return redirect()->route('admin.dashboard');
+        }
+    }
+
+    return redirect()->route('admin.login-form');
+});

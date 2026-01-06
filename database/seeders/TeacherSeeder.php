@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
 
 class TeacherSeeder extends Seeder
@@ -14,12 +14,12 @@ class TeacherSeeder extends Seeder
      */
     public function run(): void
     {
-        User::firstOrCreate(
+        Admin::firstOrCreate(
             ['email' => 'teacher@lms.com'],
             [
                 'name' => 'مستر عصام سمكة',
                 'password' => Hash::make('password'),
-                'role' => 'teacher',
+                'type' => 'admin',
                 'phone' => '01000000000',
             ]
         );

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Exam;
 use Illuminate\Database\Eloquent\Model;
 
 class ExamResult extends Model

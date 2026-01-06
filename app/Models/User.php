@@ -70,10 +70,7 @@ class User extends Authenticatable
         return $this->hasMany(Video::class, 'teacher_id');
     }
 
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
+    // ملاحظة: ما نعرّفش علاقة notifications هنا عشان ما نكسرش Notifications الافتراضية بتاعة Laravel
 
     public function assignmentSubmissions()
     {
@@ -87,12 +84,12 @@ class User extends Authenticatable
 
     public function students()
     {
-        return $this->belongsToMany(User::class, 'student_parent', 'parent_id', 'student_id');
+        return $this->belongsToMany(Admin::class, 'student_parent', 'parent_id', 'student_id');
     }
 
     public function parents()
     {
-        return $this->belongsToMany(User::class, 'student_parent', 'student_id', 'parent_id');
+        return $this->belongsToMany(Admin::class, 'student_parent', 'student_id', 'parent_id');
     }
 
     // Helper methods
@@ -109,5 +106,21 @@ class User extends Authenticatable
     public function isParent()
     {
         return $this->role === 'parent';
+    }
+
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function abilities()
+    {
+        return $this->role ? $this->role->abilities : collect();
+    }
+
+    public function hasAbility($ability)
+    {
+        return $this->abilities()->pluck('name_')->contains($ability);
     }
 }

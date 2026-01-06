@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('exam_results', function (Blueprint $table) {
             $table->id();
             $table->foreignId('exam_id')->constrained('exams')->onDelete('cascade');
-            $table->foreignId('student_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('student_id')->constrained('admins')->onDelete('cascade');
             $table->integer('marks_obtained');
             $table->text('answers')->nullable(); // JSON format
             $table->dateTime('submitted_at');

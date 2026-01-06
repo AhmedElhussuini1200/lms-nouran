@@ -16,6 +16,8 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
-        "admin-lte": "^3.2.0"
+        "admin-lte": "^3.2.0",
+        "laravel-echo": "^2.2.7",
+        "pusher-js": "^8.4.0"
     }
 }

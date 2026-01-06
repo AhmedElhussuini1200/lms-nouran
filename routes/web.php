@@ -1,42 +1,100 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\CourseController;
-use App\Http\Controllers\AssignmentController;
-use App\Http\Controllers\ExamController;
-use App\Http\Controllers\VideoController;
-use App\Http\Controllers\NotificationController;
+use Illuminate\Support\Facades\Broadcast;
+use App\Http\Controllers\Dashboard\Auth\AdminAuthController;
 
-// Authentication Routes
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Redirect / to dashboard
+// Route::get('/', function () {
+//     if (Auth::check()) {
+//         $userType = Auth::user()->type;
+//         switch ($userType) {
+//             case 'admin':
+//                 return redirect()->route('admin.dashboard');
+//             case 'consultant':
+//                 return redirect()->route('consultant.dashboard');
+//             case 'contractor':
+//                 return redirect()->route('contractor.dashboard');
+//             default:
+//                 return redirect()->route('admin.dashboard');
+//         }
+//     }
 
-// Redirect root to login
-Route::get('/', function () {
-    return redirect()->route('login');
+//     return redirect()->route('admin.login-form');
+// });
+
+// ------------------ Admin Auth ------------------
+require __DIR__ . '/dashboard.php';
+Route::middleware('web')->group(function () {
+    Route::get('/', function () {
+        $user = Auth::guard('admin')->user();
+
+        if (!$user) {
+            return redirect()->route('admin.login-form');
+        }
+
+        switch ($user->type) {
+            case 'admin':
+                return redirect()->route('admin.index');
+            case 'teacher':
+            case 'student':
+            case 'parent':
+                // Dashboard موحّد تحت /admin حسب نوع المستخدم
+                return redirect()->route('admin.index');
+            default:
+                Auth::guard('admin')->logout();
+                session()->invalidate();
+                session()->regenerateToken();
+                return redirect()->route('admin.login-form');
+        }
+    });
 });
 
-// Protected Routes
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Courses
-    Route::resource('courses', CourseController::class);
-    
-    // Assignments
-    Route::resource('assignments', AssignmentController::class);
-    
-    // Exams
-    Route::resource('exams', ExamController::class);
-    
-    // Videos
-    Route::resource('videos', VideoController::class);
-    
-    // Notifications
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+Route::group(['namespace' => 'Dashboard\Auth', 'middleware' => 'set_locale'], function () {
+    // صفحة الدخول الأساسية (نفس الصفحة لكل الأنواع)
+    Route::get('admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login-form');
+
+    // نوفّر alias عام باسم 'login' عشان أي حاجة في لارفيل تتوقعه
+    Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
+
+    Route::post('admin/login', [AdminAuthController::class, 'login'])->name('admin.login');
+    Route::post('admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 });
+
+// ------------------ User Login ------------------
+Route::get('/user/login/form', function () {
+    $user  = \App\Models\User::find(12);
+    Auth::login($user);
+    return view('auth.userLogin');
+});
+Route::post('/user/login', function (Request $request) {
+    return redirect('/chat');
+})->name('user.login');
+
+
+
+// ------------------ Broadcast ------------------
+Route::middleware('auth:sanctum')->group(function () {
+    Broadcast::routes();
+});
+
+// ------------------ Catch-All Fallback ------------------
+// Route::fallback(function () {
+//     if (Auth::check()) {
+//         $userType = Auth::user()->type;
+//         switch ($userType) {
+//             case 'admin':
+//                 return redirect()->route('admin.dashboard');
+//             case 'consultant':
+//                 return redirect()->route('consultant.dashboard');
+//             case 'contractor':
+//                 return redirect()->route('contractor.dashboard');
+//             default:
+//                 return redirect()->route('admin.dashboard');
+//         }
+//     }
+
+//     return redirect()->route('admin.login-form');
+// });

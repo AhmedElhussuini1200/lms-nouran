@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Assignment;
 use Illuminate\Database\Eloquent\Model;
 
 class AssignmentSubmission extends Model

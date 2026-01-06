@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->enum('grade', ['1_secondary', '2_secondary', '3_secondary']);
-            $table->foreignId('teacher_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('teacher_id')->constrained('admins')->onDelete('cascade');
             $table->dateTime('scheduled_at');
             $table->timestamps();
         });

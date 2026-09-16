@@ -10,6 +10,7 @@ class AssignmentSubmission extends Model
     protected $fillable = [
         'assignment_id',
         'student_id',
+        'status_id',
         'submission_text',
         'file_path',
         'marks',
@@ -31,6 +32,11 @@ class AssignmentSubmission extends Model
 
     public function student()
     {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(Admin::class, 'student_id');
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(Status::class);
     }
 }

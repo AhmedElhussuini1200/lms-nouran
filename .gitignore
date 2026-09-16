@@ -13,6 +13,10 @@
 /.zed
 /auth.json
 /node_modules
+whatsapp-gateway/node_modules/
+whatsapp-gateway/auth-state/
+whatsapp-gateway/*.log
+/evolution-data/
 /public/build
 /public/hot
 /public/storage

@@ -70,6 +70,15 @@ $(document).ready(function () {
 
     // دالة النجاح العامة بعد أي AJAX
     window['onAjaxSuccess'] = function(response) {
+        response = response || {};
+
+        // 0- لو السيرفر راجع بلينك (إضافة/تعديل) → توست تأكيد + تحويل تلقائي
+        if (response.url) {
+            if (typeof showToast === 'function') showToast(response.message || null);
+            setTimeout(function() { window.location.replace(response.url); }, 1600);
+            return;
+        }
+
         // 1- تفريغ الفورمات
         $('.ajax-form').each(function () {
             resetFormCompletely($(this));

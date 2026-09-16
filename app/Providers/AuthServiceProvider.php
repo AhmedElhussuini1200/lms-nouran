@@ -23,20 +23,26 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::before(function ($admin, $ability) {
-            // لو مش داخل كأدمن سيب بقية السيستم (policies/abilities) تشتغل عادي
-            if (!Auth::guard('admin')->check()) {
+        Gate::before(function ($user, $ability) {
+            // اليوزر قد يأتي من أي جارد — وحّده على مستخدم الأدمن
+            $admin = $user ?? Auth::guard('admin')->user();
+
+            if (!$admin) {
                 return null;
             }
 
             // الأدمن (type = admin) سوبر، يدخل على كل حاجة
-            if ($admin->type === 'admin') {
+            if (($admin->type ?? null) === 'admin') {
                 return true;
             }
 
             // لباقي الأنواع (teacher / student / parent) اعتمد على الـ abilities المرتبطة بالـ roles
-            if ($admin->abilities()->pluck('name')->contains($ability)) {
-                return true;
+            try {
+                if ($admin->abilities()->pluck('name')->contains($ability)) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                return null;
             }
 
             // رجّع null عشان لو فيه تعريفات تانية في Gate أو Policies تكمّل

@@ -10,6 +10,7 @@ class ExamResult extends Model
     protected $fillable = [
         'exam_id',
         'student_id',
+        'status_id',
         'marks_obtained',
         'answers',
         'submitted_at',
@@ -30,6 +31,11 @@ class ExamResult extends Model
 
     public function student()
     {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(Admin::class, 'student_id');
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(Status::class);
     }
 }

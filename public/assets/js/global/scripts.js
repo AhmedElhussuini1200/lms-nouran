@@ -485,6 +485,16 @@ function onImgError(
 }
 
 /** Start :: Submit any form in dashboard function  **/
+// callback افتراضي لكل فورمات ajax: توست تأكيد + تحويل/تحديث تلقائي لو السيرفر رجع url
+if (typeof window['onAjaxSuccess'] === 'undefined') {
+    window['onAjaxSuccess'] = function (response) {
+        response = response || {};
+        if (typeof showToast === 'function') showToast(response.message || null);
+        if (response.url) {
+            setTimeout(function () { window.location.replace(response.url); }, 1600);
+        }
+    };
+}
 let submitForm = (form) => {
     let submitBtn = $(form).find("[type=submit]");
 
@@ -518,8 +528,12 @@ let submitForm = (form) => {
 
             removeValidationMessages();
 
-            if (response.status === 422)
+            if (response.status === 422) {
                 displayValidationMessages(response.responseJSON.errors, form);
+                if (response.responseJSON.message && typeof errorAlert === 'function') {
+                    errorAlert(response.responseJSON.message, 5000);
+                }
+            }
             else if (response.status === 403) unauthorizedAlert();
             else if (response.status === 419) window.location.reload();
             else errorAlert(response.responseJSON.message, 5000);

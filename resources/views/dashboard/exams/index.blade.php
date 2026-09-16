@@ -1,53 +1,21 @@
-@extends('layouts.app')
-
-@section('title', 'الامتحانات')
-
+@extends('dashboard.partials.master')
 @section('content')
-<div class="px-4 py-6 sm:px-0">
-    <div class="mb-6 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-900">الامتحانات</h1>
-        @if(auth()->user()->isTeacher())
-            <a href="{{ route('exams.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
-                إضافة امتحان جديد
-            </a>
-        @endif
-    </div>
-
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="divide-y divide-gray-200">
-            @forelse($exams as $exam)
-                <div class="p-6 hover:bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <h3 class="text-lg font-medium text-gray-900">
-                                <a href="{{ route('exams.show', $exam) }}" class="hover:text-indigo-600">
-                                    {{ $exam->title }}
-                                </a>
-                            </h3>
-                            <p class="mt-2 text-sm text-gray-600">{{ Str::limit($exam->description, 150) }}</p>
-                            <div class="mt-4 flex items-center text-sm text-gray-500">
-                                <span>الصف: {{ $exam->grade }}</span>
-                                <span class="mx-2">•</span>
-                                <span>تاريخ الامتحان: {{ $exam->exam_date->format('Y-m-d H:i') }}</span>
-                                <span class="mx-2">•</span>
-                                <span>المدة: {{ $exam->duration_minutes }} دقيقة</span>
-                                <span class="mx-2">•</span>
-                                <span>الدرجة الكلية: {{ $exam->total_marks }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="p-8 text-center">
-                    <p class="text-gray-500">لا توجد امتحانات</p>
-                </div>
-            @endforelse
-        </div>
-
-        <div class="px-4 py-3 border-t border-gray-200">
-            {{ $exams->links() }}
-        </div>
-    </div>
-</div>
+<div class="card mb-7"><div class="card-body d-flex flex-column flex-md-row align-items-md-center py-6 px-6">
+<div class="flex-grow-1"><h2 class="fw-bold mb-2">{{ __('الامتحانات') }}</h2><p class="text-muted mb-0">{{ __('قدم امتحاناتك وتابع نتائجك') }}</p></div>
+<div class="mt-4 mt-md-0 d-flex gap-3">
+<form method="GET" action="{{ route('admin.exams.index') }}"><select data-placeholder="{{ __('الصف الدراسي') }}" data-control="select2" name="grade" class="form-select w-auto" onchange="this.form.submit()">@foreach($grades as $k=>$v)<option value="{{ $k }}" {{ request('grade')==$k?'selected':'' }}>{{ $v }}</option>@endforeach</select>@if(auth('admin')->user()->type==='admin' && isset($teachers))<select data-placeholder="{{ __('مدرس') }}" data-control="select2" name="teacher" class="form-select w-auto" onchange="this.form.submit()"><option value="all">{{ __('كل المدرسين') }}</option>@foreach($teachers as $t)<option value="{{ $t->id }}" {{ request('teacher')==$t->id?'selected':'' }}>{{ $t->name }}{{ $t->subject ? ' - '.$t->subject : '' }}</option>@endforeach</select>@endif</form>
+@if(in_array(auth('admin')->user()->type,['admin','teacher']))<a href="{{ route('admin.exams.create') }}" class="btn btn-primary"><i class="ki-outline ki-plus fs-2"></i><span class="ms-2">{{ __('إضافة امتحان') }}</span></a>@endif
+</div></div></div>
+<div class="card"><div class="card-body p-0"><div class="table-responsive"><table class="table table-row-bordered align-middle gy-4 mb-0">
+<thead><tr class="fw-bold text-muted"><th>{{ __('العنوان') }}</th><th>{{ __('الصف') }}</th><th>{{ __('الموعد') }}</th><th>{{ __('المدة') }}</th><th>{{ __('الدرجة') }}</th><th>{{ __('النتائج') }}</th><th></th></tr></thead>
+<tbody>@forelse($exams as $e)<tr>
+<td class="fw-bold">{{ $e->title }}<div class="text-muted fw-normal fs-8">{{ $e->teacher->name ?? '' }}</div></td>
+<td><span class="badge badge-light-info">{{ __($e->grade) }}</span></td>
+<td class="text-muted fs-8">{{ $e->exam_date?->format('Y-m-d H:i') ?? '—' }}</td>
+<td>{{ $e->duration_minutes ? $e->duration_minutes.' '.__('دقيقة') : '—' }}</td>
+<td>{{ $e->total_marks ?? '—' }}</td><td>{{ $e->results_count }}</td>
+<td class="text-end"><a href="{{ route('admin.exams.show',$e->id) }}" class="btn btn-sm btn-light-primary">{{ __('عرض') }}</a></td>
+</tr>@empty<tr><td colspan="7" class="text-center text-muted py-10">{{ __('لا توجد امتحانات') }}</td></tr>@endforelse</tbody>
+</table></div></div></div>
+@if(method_exists($exams,'links'))<div class="mt-7 d-flex justify-content-center">{{ $exams->appends(request()->query())->links() }}</div>@endif
 @endsection
-

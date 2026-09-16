@@ -25,6 +25,81 @@
             @endcan
             <!--end::Nav item-->
 
+            <!--begin::Nav item - Videos-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute('admin.videos.*') }}"
+                    href="{{ route('admin.videos.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('الفيديوهات') }}">
+                    <i class="ki-outline ki-video fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            <!--begin::Nav item - Courses-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute('admin.courses.*') }}"
+                    href="{{ route('admin.courses.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('الحصص') }}">
+                    <i class="ki-outline ki-book-open fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            <!--begin::Nav item - Assignments-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute(['admin.assignments.*','admin.submissions.*']) }}"
+                    href="{{ route('admin.assignments.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('الواجبات') }}">
+                    <i class="ki-outline ki-file fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            <!--begin::Nav item - Exams-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute(['admin.exams.*','admin.results.*']) }}"
+                    href="{{ route('admin.exams.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('الامتحانات') }}">
+                    <i class="ki-outline ki-clipboard fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            <!--begin::Nav item - Payments-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute('admin.payments.*') }}"
+                    href="{{ route('admin.payments.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('الحسابات') }}">
+                    <i class="ki-outline ki-wallet fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            <!--begin::Nav item - Statuses-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute('admin.statuses.*') }}"
+                    href="{{ route('admin.statuses.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('جدول الحالات') }}">
+                    <i class="ki-outline ki-flag fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            <!--begin::Nav item - Roles-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute('admin.roles.*') }}"
+                    href="{{ route('admin.roles.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('الأدوار والصلاحيات') }}">
+                    <i class="ki-outline ki-shield-tick fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            <!--begin::Nav item - WhatsApp-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute('admin.whatsapp.*') }}"
+                    href="{{ route('admin.whatsapp.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('واتساب') }}">
+                    <i class="ki-outline ki-whatsapp fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            @can('view_settings')
+            <!--begin::Nav item - Branding-->
+            <li class="nav-item mb-2">
+                <a class="nav-link btn btn-icon btn-active-info btn-color-gray-600 {{ isActiveRoute('admin.branding.*') }}"
+                    href="{{ route('admin.branding.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ __('الهوية البصرية') }}">
+                    <i class="ki-outline ki-paintbucket fs-2"></i>
+                </a>
+            </li>
+            <!--end::Nav item-->
+            @endcan
+
 
 
         </ul>

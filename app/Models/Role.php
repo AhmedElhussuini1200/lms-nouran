@@ -21,9 +21,16 @@ class Role extends Model
 
     public static $modules = [
         'admins',
-        'dashboard'
-
-
+        'dashboard',
+        'roles',
+        'videos',
+        'courses',
+        'assignments',
+        'exams',
+        'payments',
+        'statuses',
+        'branding',
+        'settings',
     ];
 
     protected static function booted()

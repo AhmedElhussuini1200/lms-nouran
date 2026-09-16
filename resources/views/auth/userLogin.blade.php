@@ -144,10 +144,10 @@
                         <div class="d-flex flex-center flex-column-auto">
                             <!--begin::Links-->
                             <div class="d-flex align-items-center fw-bold fs-6">
-                                <a href="https://webstdy.com/{{ app()->getLocale() }}" target="_blank"
+                                <a href="https://github.com/Ahmedelhussuini900" target="_blank"
                                     class="text-muted text-hover-primary px-2" id="developed_by">
                                     {{ __('Developed by') }} <img class="mx-4"
-                                        src="https://webstdy.com/CDN/cr_dark.png">
+                                        src="https://github.com/Ahmedelhussuini900">
                                 </a>
                             </div>
                             <!--end::Links-->
@@ -166,7 +166,7 @@
     </div>
     <!--end::Root-->
     <!--begin::Javascript-->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 
 
     <!--end::Custom Javascript-->

@@ -1,0 +1,15 @@
+{
+  "name": "lms-whatsapp-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WhatsApp gateway for LMS (Baileys) - send from dashboard via your own number",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node gateway.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.18",
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4"
+  }
+}

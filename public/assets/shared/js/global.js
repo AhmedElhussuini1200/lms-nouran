@@ -6,8 +6,7 @@ let removeValidationMessages = function() {
 }
 
 let displayValidationMessages = function(errors ,form = null) {
-    form.find('.form-control:not(".controls")').addClass('is-valid')
-    form.find('.form-select').addClass('is-valid')
+    // نعلّم الحقول الغلط فقط — بدون علامة صح خضراء تتداخل مع الكلام في RTL
     $.each(errors, (key, errorMessage) => getErrorElement(form,key).html(errorMessage).css('display','block'));
     scrollToFirstErrorElement(errors);
 }
@@ -22,6 +21,20 @@ function getErrorElement(form,errorKey) {
         errorInput = form.find(`[name='${inputName}']`);
         errorElement = errorInput.siblings('.error-element');
     }
+
+    // fallback: دور على الحقل بالاسم مباشرة (للفورمات اللي مفيهاش id للحقل)
+    if (!errorElement.length || !errorInput.length){
+        errorInput = form.find(`[name='${errorKey}']`);
+        errorElement = errorInput.siblings('.invalid-feedback');
+    }
+
+    // آخر حل: أنشئ عنصر عرض الرسالة بعد الحقل تلقائياً
+    if (!errorElement.length && errorInput.length){
+        errorInput.after('<p class="invalid-feedback"></p>');
+        errorElement = errorInput.siblings('.invalid-feedback');
+    }
+
+    if (!errorElement.length) return errorElement;
     errorInput.removeClass('is-valid');
     errorInput.addClass('is-invalid');
     /** For select2 **/
@@ -53,7 +66,9 @@ function scrollToFirstErrorElement(errors) {
     }
 
     console.log(firstErrorElement, firstErrorElementId);
-    firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (firstErrorElement && firstErrorElement.scrollIntoView) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 }
 
 $.ajaxSetup({

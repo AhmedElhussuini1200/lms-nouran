@@ -11,6 +11,7 @@ class Exam extends Model
         'description',
         'grade',
         'teacher_id',
+        'subject',
         'exam_date',
         'duration_minutes',
         'total_marks',
@@ -25,11 +26,16 @@ class Exam extends Model
 
     public function teacher()
     {
-        return $this->belongsTo(User::class, 'teacher_id');
+        return $this->belongsTo(Admin::class, 'teacher_id');
     }
 
     public function results()
     {
         return $this->hasMany(ExamResult::class);
+    }
+
+    public function questions()
+    {
+        return $this->hasMany(Question::class)->orderBy('sort')->orderBy('id');
     }
 }

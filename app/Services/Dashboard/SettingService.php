@@ -16,7 +16,7 @@ class SettingService
     public function index()
     {
         [$roles, $abilities] = $this->settingRepository->index();
-        return view('dashboard.admin.settings.index', ['roles' => $roles, 'abilities' => $abilities, 'modules' => Role::$modules]);
+        return view('dashboard.settings.index', ['roles' => $roles, 'abilities' => $abilities, 'modules' => Role::$modules]);
     }
     public function changeThemeMode($request)
     {
@@ -33,11 +33,6 @@ class SettingService
         if (request()->isMethod('post')) {
             $this->settingRepository->store($data);
         }
-    }
-    public function getStatus()
-    {
-        $this->settingRepository->getStatus();
-
     }
 
 }

@@ -63,18 +63,6 @@ Route::group(['namespace' => 'Dashboard\Auth', 'middleware' => 'set_locale'], fu
     Route::post('admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 });
 
-// ------------------ User Login ------------------
-Route::get('/user/login/form', function () {
-    $user  = \App\Models\User::find(12);
-    Auth::login($user);
-    return view('auth.userLogin');
-});
-Route::post('/user/login', function (Request $request) {
-    return redirect('/chat');
-})->name('user.login');
-
-
-
 // ------------------ Broadcast ------------------
 Route::middleware('auth:sanctum')->group(function () {
     Broadcast::routes();

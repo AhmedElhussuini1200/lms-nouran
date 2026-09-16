@@ -9,10 +9,11 @@
             <!--begin::Header logo-->
             <div class="app-header-logo d-flex align-items-center">
                 <!--begin::Logo image-->
-                <a href="{{ route('admin.admins.index') }}" class="me-5 me-lg-9">
-                    <img alt="Logo"
-                        src="{{ isDarkMode() ? asset('placeholder_images/logo-dark-mode.svg') : asset('loges/icon-192.png') }}"
-                        class="h-70px" />
+                <a href="{{ route('admin.index') }}" class="me-5 me-lg-9 d-flex align-items-center gap-3">
+                    <img alt="{{ brand('site_name') }}"
+                        src="{{ brand('logo') ? asset(brand('logo')) : (isDarkMode() ? asset('placeholder_images/logo-dark-mode.svg') : asset('loges/icon-192.png')) }}"
+                        class="h-50px rounded" />
+                    <span class="fw-bold fs-5 d-none d-md-inline">{{ brand('site_name') }}</span>
                 </a>
                 <!--end::Logo image-->
 
@@ -34,11 +35,11 @@
                             <!--begin:Menu item-->
                             <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
                                 data-kt-menu-placement="bottom-start" data-kt-menu-offset="-400,0"
-                                class="menu-item menu-lg-down-accordion me-0  {{ isTabHere('admin.admins.index') }}">
+                                class="menu-item menu-lg-down-accordion me-0  {{ isTabHere('admin.index') }}">
                                 <!--begin:Menu link-->
-                                <a class="menu-link" href="{{ route('admin.admins.index') }}">
+                                <a class="menu-link" href="{{ route('admin.index') }}">
                                     <span class="menu-title"
-                                        style="{{ isTabBold('admin.admins.index') }}">{{ __('Dashboard') }}</span>
+                                        style="{{ isTabBold('admin.index') }}">{{ __('Dashboard') }}</span>
                                     <span class="menu-arrow d-lg-none"></span>
                                 </a>
                                 <!--end:Menu link-->
@@ -157,9 +158,10 @@
                         </div>
                         <!--end::Menu item-->
                         <!--begin::Menu item-->
-                        {{-- <div class="menu-item px-5" data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
+                        <!--begin::Menu item-->
+                        <div class="menu-item px-5" data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
                             data-kt-menu-placement="right-end" data-kt-menu-offset="-15px, 0">
-                            <a href="{{ route('dashboard.admin.change-language', 'en') }}" class="menu-link px-5">
+                            <a href="#" class="menu-link px-5">
                                 <span class="menu-title position-relative">
                                     {{ __('Language') }}
                                     @if (isArabic())
@@ -183,7 +185,7 @@
                             <div class="menu-sub menu-sub-dropdown w-175px py-4">
                                 <!--begin::Menu item-->
                                 <div class="menu-item px-3">
-                                    <a href="{{ route('dashboard.admin.change-language', 'en') }}"
+                                    <a href="{{ route('admin.change-language', 'en') }}"
                                         class="menu-link d-flex px-5 @if (!isArabic()) active @endif">
                                         <span class="symbol symbol-20px me-4">
                                             <img class="rounded-1"
@@ -195,7 +197,7 @@
                                 <!--end::Menu item-->
                                 <!--begin::Menu item-->
                                 <div class="menu-item px-3">
-                                    <a href="{{ route('dashboard.admin.change-language', 'ar') }}"
+                                    <a href="{{ route('admin.change-language', 'ar') }}"
                                         class="menu-link d-flex px-5 @if (isArabic()) active @endif">
                                         <span class="symbol symbol-20px me-4">
                                             <img class="rounded-1"
@@ -207,7 +209,8 @@
                                 <!--end::Menu item-->
                             </div>
                             <!--end::Menu sub-->
-                        </div> --}}
+                        </div>
+                        <!--end::Menu item-->
                         <!--end::Menu item-->
                         <form class="logout-form" method="post" action="{{ route('admin.logout') }}">
                             @csrf
@@ -491,7 +494,7 @@
                 @canany(['view_settings', 'view_roles', 'view_commission_tax'])
                     <div class="app-navbar-item me-3">
                         <a
-                            href="{{ auth()->user()->can('view_settings') ? route('admin.settings.index') : route('admin.settings.roles.index') }}">
+                            href="{{ route('admin.branding.index') }}">
                             <div class="btn btn-icon btn-icon-gray-600 border border-dashed border-gray-300 w-35px h-35px w-md-40px h-md-40px"
                                 data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent"
                                 data-kt-menu-placement="bottom-end">
@@ -504,11 +507,19 @@
                 <!--begin::Sidebar menu toggle-->
                 <div class="app-navbar-item d-flex align-items-center d-lg-none ms-1 me-n3">
                     <a href="#" class="btn btn-icon btn-color-gray-500 btn-active-color-primary w-35px h-35px"
+                        id="kt_app_sidebar_mobile_toggle">
+                        <i class="ki-outline ki-abstract-14 fs-1"></i>
+                    </a>
+                </div>
+                <!--end::Sidebar menu toggle-->
+                <!--begin::Header menu toggle-->
+                <div class="app-navbar-item d-flex align-items-center d-lg-none ms-1 me-n3">
+                    <a href="#" class="btn btn-icon btn-color-gray-500 btn-active-color-primary w-35px h-35px"
                         id="kt_app_header_menu_toggle">
                         <i class="ki-outline ki-text-align-left fs-1"></i>
                     </a>
                 </div>
-                <!--end::Sidebar menu toggle-->
+                <!--end::Header menu toggle-->
             </div>
             <!--end::Navbar-->
         </div>

@@ -1,142 +1,75 @@
-@extends('layouts.app')
-
-@section('title', 'لوحة تحكم الطالب')
-
+@extends('dashboard.partials.master')
 @section('content')
-<div class="px-4 py-6 sm:px-0">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">مرحباً، {{ auth()->user()->name }}</h1>
-        <p class="text-gray-600">لوحة تحكم الطالب</p>
-    </div>
+<div class="card mb-7"><div class="card-body d-flex flex-column flex-md-row align-items-md-center py-6 px-6">
+<div class="flex-grow-1"><h2 class="fw-bold mb-2">{{ __('مرحباً،') }} {{ auth('admin')->user()->name }}</h2>
+<p class="text-muted mb-0">{{ __('لوحة تحكم الطالب') }} • <span class="badge badge-light-warning">{{ __('نقاط التميز') }}: {{ $stats['points'] ?? 0 }}</span> <span class="badge badge-light-success">{{ __('أيام الالتزام') }}: {{ $stats['streak'] ?? 0 }}</span></p></div>
+<div class="mt-4 mt-md-0 d-flex gap-3">
+<a href="{{ route('admin.assignments.index') }}" class="btn btn-light-primary">{{ __('واجباتي') }}</a>
+<a href="{{ route('admin.videos.index') }}" class="btn btn-primary">{{ __('أكمل الدروس') }}</a>
+</div></div></div>
 
-    <!-- Statistics -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                    </div>
-                    <div class="mr-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">الحصص</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ $stats['courses'] }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
+@if(!auth('admin')->user()->grade)
+<div class="alert alert-warning d-flex align-items-center mb-7">
+<i class="ki-outline ki-information fs-2 me-3"></i>
+<span>{{ __('لم يتم تحديد صفك الدراسي بعد — تواصل مع الإدارة لتحديد صفك') }}</span>
+</div>
+@endif
 
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                    <div class="mr-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">الواجبات</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ $stats['assignments'] }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
+@if(isset($overdueAssignments) && $overdueAssignments > 0)
+<div class="alert alert-danger d-flex align-items-center mb-7">
+<i class="ki-outline ki-information fs-2 me-3"></i>
+<span>{{ __('لديك') }} <b>{{ $overdueAssignments }}</b> {{ __('واجبات متأخرة عن موعدها — سلمها الآن') }}</span>
+<a href="{{ route('admin.assignments.index') }}" class="btn btn-sm btn-danger ms-auto">{{ __('عرضها') }}</a>
+</div>
+@endif
 
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                    </div>
-                    <div class="mr-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">الامتحانات</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ $stats['exams'] }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
+@if(isset($upcomingExams) && $upcomingExams->isNotEmpty())
+<div class="card mb-7" style="border-top: 3px solid #f1416c">
+<div class="card-header"><h3 class="card-title">{{ __('امتحانات قادمة') }}</h3></div>
+<div class="card-body py-5">
+@foreach($upcomingExams as $e)
+<div class="d-flex align-items-center gap-4 border rounded p-4 mb-3">
+<div class="flex-grow-1"><a href="{{ route('admin.exams.show',$e->id) }}" class="fw-bold text-gray-900">{{ $e->title }}</a>
+<div class="text-muted fs-8">{{ $e->exam_date?->format('Y-m-d H:i') }}</div></div>
+<span class="badge badge-light-danger fs-7 countdown" data-date="{{ $e->exam_date?->toIso8601String() }}">…</span>
+</div>
+@endforeach
+</div>
+</div>
+@endif
 
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <div class="mr-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">الفيديوهات</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ $stats['videos'] }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="row g-6 g-xl-9 mb-7">
+@foreach([['label'=>__('الحصص'),'v'=>$stats['courses'],'c'=>'primary','i'=>'book-open'],['label'=>__('الواجبات'),'v'=>$stats['assignments'],'c'=>'success','i'=>'file'],['label'=>__('الامتحانات'),'v'=>$stats['exams'],'c'=>'warning','i'=>'clipboard'],['label'=>__('الفيديوهات'),'v'=>$stats['videos'],'c'=>'danger','i'=>'video']] as $s)
+<div class="col-sm-6 col-xl-3"><div class="card card-flush h-100"><div class="card-body py-5 px-6 d-flex align-items-center gap-4">
+<span class="symbol symbol-45px"><span class="symbol-label bg-light-{{ $s['c'] }}"><i class="ki-outline ki-{{ $s['i'] }} fs-2 text-{{ $s['c'] }}"></i></span></span>
+<div><div class="fs-6 fw-bold text-gray-800">{{ $s['label'] }}</div><div class="fs-2 fw-bolder">{{ $s['v'] }}</div></div>
+</div></div></div>
+@endforeach
+</div>
 
-    <!-- Upcoming Courses -->
-    <div class="bg-white shadow rounded-lg mb-6">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">الحصص القادمة</h3>
-            <div class="space-y-4">
-                @forelse($upcomingCourses as $course)
-                    <div class="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
-                        <h4 class="text-sm font-medium text-gray-900">{{ $course->title }}</h4>
-                        <p class="text-sm text-gray-500 mt-1">{{ $course->description }}</p>
-                        <p class="text-xs text-gray-400 mt-2">تاريخ الحصة: {{ $course->scheduled_at->format('Y-m-d H:i') }}</p>
-                    </div>
-                @empty
-                    <p class="text-sm text-gray-500">لا توجد حصص قادمة</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <!-- Pending Assignments -->
-    <div class="bg-white shadow rounded-lg mb-6">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">الواجبات المعلقة</h3>
-            <div class="space-y-4">
-                @forelse($pendingAssignments as $assignment)
-                    <div class="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
-                        <h4 class="text-sm font-medium text-gray-900">{{ $assignment->title }}</h4>
-                        <p class="text-sm text-gray-500 mt-1">{{ $assignment->description }}</p>
-                        <p class="text-xs text-gray-400 mt-2">تاريخ الاستحقاق: {{ $assignment->due_date->format('Y-m-d H:i') }}</p>
-                    </div>
-                @empty
-                    <p class="text-sm text-gray-500">لا توجد واجبات معلقة</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Videos -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">الفيديوهات الأخيرة</h3>
-            <div class="space-y-4">
-                @forelse($recentVideos as $video)
-                    <div class="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
-                        <h4 class="text-sm font-medium text-gray-900">{{ $video->title }}</h4>
-                        <p class="text-sm text-gray-500 mt-1">{{ $video->description }}</p>
-                        <a href="{{ route('videos.show', $video) }}" class="text-sm text-indigo-600 hover:text-indigo-900 mt-2 inline-block">مشاهدة الفيديو</a>
-                    </div>
-                @empty
-                    <p class="text-sm text-gray-500">لا توجد فيديوهات</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
+<div class="row g-6 g-xl-9">
+<div class="col-xl-4"><div class="card card-flush h-100"><div class="card-header"><h3 class="card-title">{{ __('واجبات بانتظارك') }}</h3></div>
+<div class="card-body py-5">@forelse($pendingAssignments as $a)<a href="{{ route('admin.assignments.show',$a->id) }}" class="d-block border rounded p-4 mb-3"><span class="fw-bold">{{ $a->title }}</span><span class="d-block text-muted fs-8 mt-1">{{ __('التسليم') }}: {{ $a->due_date?->format('Y-m-d') ?? '—' }}</span></a>@empty<p class="text-muted">{{ __('ممتاز! لا توجد واجبات معلقة') }}</p>@endforelse</div></div></div>
+<div class="col-xl-4"><div class="card card-flush h-100"><div class="card-header"><h3 class="card-title">{{ __('حصص قادمة') }}</h3></div>
+<div class="card-body py-5">@forelse($upcomingCourses as $c)<a href="{{ route('admin.courses.show',$c->id) }}" class="d-block border rounded p-4 mb-3"><span class="fw-bold">{{ $c->title }}</span><span class="d-block text-muted fs-8 mt-1">{{ $c->scheduled_at?->format('Y-m-d H:i') ?? '' }}</span></a>@empty<p class="text-muted">{{ __('لا توجد حصص مجدولة') }}</p>@endforelse</div></div></div>
+<div class="col-xl-4"><div class="card card-flush h-100"><div class="card-header"><h3 class="card-title">{{ __('أكمل المشاهدة') }}</h3></div>
+<div class="card-body py-5">@forelse($recentVideos as $v)<a href="{{ route('admin.videos.show',$v->id) }}" class="d-block border rounded p-4 mb-3"><span class="fw-bold">{{ \Illuminate\Support\Str::limit($v->title,45) }}</span><span class="d-block text-muted fs-8 mt-1">{{ $v->views_count }} {{ __('مشاهدة') }}</span></a>@empty<p class="text-muted">{{ __('لا توجد فيديوهات') }}</p>@endforelse</div></div></div>
 </div>
 @endsection
 
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function tick() {
+        document.querySelectorAll('.countdown[data-date]').forEach(function(el) {
+            const diff = new Date(el.dataset.date).getTime() - Date.now();
+            if (isNaN(diff) || diff <= 0) { el.textContent = "{{ __('بدأ الآن') }}"; return; }
+            const d = Math.floor(diff / 86400000), h = Math.floor(diff % 86400000 / 3600000), m = Math.floor(diff % 3600000 / 60000);
+            el.textContent = (d > 0 ? d + "{{ __('يوم') }} " : "") + pad(h) + ":" + pad(m);
+        });
+    }
+    tick(); setInterval(tick, 60000);
+});
+</script>
+@endpush

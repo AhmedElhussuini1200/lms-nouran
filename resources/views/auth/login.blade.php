@@ -7,7 +7,7 @@ style="direction:rtl" @endif
 
 <head>
     <base href="../../../" />
-    <title>{{ __('Lms Nouran') }}</title>
+    <title>{{ brand('site_name') }} — {{ __('Sign In') }}</title>
     <meta charset="utf-8" />
     <meta name="description"
         content="The most advanced Tailwind CSS & Bootstrap 5 Admin Theme with 40 unique prebuilt layouts on Themeforest trusted by 100,000 beginners and professionals. Multi-demo, Dark Mode, RTL support and complete React, Angular, Vue, Asp.Net Core, Rails, Spring, Blazor, Django, Express.js, Node.js, Flask, Symfony & Laravel versions. Grab your copy now and get life-time updates for free." />
@@ -21,7 +21,7 @@ style="direction:rtl" @endif
     <meta property="og:url" content="https://keenthemes.com/metronic" />
     <meta property="og:site_name" content="Mission" />
     <link rel="canonical" href="http://preview.keenthemes.comauthentication/layouts/overlay/sign-in.html" />
-    <link rel="shortcut icon" href="{{ isDarkMode() ? asset('favicon.ico') : asset('favicon.ico') }}" />
+    <link rel="shortcut icon" href="{{ asset(brand('logo')) }}" />
     <!--begin::Fonts(mandatory for all pages)-->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
     <!--end::Fonts-->
@@ -91,6 +91,9 @@ style="direction:rtl" @endif
                             @csrf
                             <!--begin::Heading-->
                             <div class="text-center mb-11">
+                                <!--begin::Logo-->
+                                <img alt="{{ brand('site_name') }}" src="{{ asset(brand('logo')) }}" onerror="this.onerror=null;this.src='{{ asset('loges/icon-192.png') }}'" class="h-80px mb-5 rounded" />
+                                <!--end::Logo-->
                                 <!--begin::Title-->
                                 <h1 class="text-gray-900 fw-bolder mb-3">{{ __('Sign In') }}</h1>
                                 <!--end::Title-->
@@ -106,11 +109,19 @@ style="direction:rtl" @endif
                                 <!--end::Email-->
                             </div>
                             <!--end::Input group=-->
-                            <div class="fv-row mb-8">
+                            <div class="fv-row mb-8" data-kt-password-meter="true">
                                 <!--begin::Password-->
-                                <input type="password" placeholder="{{ __('Password') }}" name="password"
-                                    autocomplete="off" class="form-control bg-transparent" />
-
+                                <div class="position-relative">
+                                    <input type="password" placeholder="{{ __('Password') }}" name="password"
+                                        autocomplete="off" class="form-control bg-transparent pe-12" id="login-password" />
+                                    <!--begin::Eye toggle-->
+                                    <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-2"
+                                        id="toggle-password" style="cursor:pointer" title="{{ __('إظهار / إخفاء') }}">
+                                        <i class="ki-outline ki-eye fs-2" id="eye-open"></i>
+                                        <i class="ki-outline ki-eye-slash fs-2 d-none" id="eye-closed"></i>
+                                    </span>
+                                    <!--end::Eye toggle-->
+                                </div>
                                 <!--end::Password-->
                                 <p class="invalid-feedback" id="password"></p>
 
@@ -145,11 +156,16 @@ style="direction:rtl" @endif
                         <div class="d-flex flex-center flex-column-auto">
                             <!--begin::Links-->
                             <div class="d-flex align-items-center fw-bold fs-6">
-                                <a href="https://webstdy.com/{{ app()->getLocale() }}" target="_blank"
-                                    class="text-muted text-hover-primary px-2" id="developed_by">
-                                    {{ __('Developed by') }} <img class="mx-4"
-                                        src="https://webstdy.com/CDN/cr_dark.png">
-                                </a>
+                              <a href="https://github.com/Ahmedelhussuini900" target="_blank"
+                                    class="text-muted text-hover-primary px-2">
+                                        {{ __('Developed by') }}
+
+                                        <img class="mx-2 rounded-circle"
+                                            src="{{ asset('assets/logo/177956648.jpeg') }}"
+                                            alt="Ahmed"
+                                            width="40"
+                                            height="40">
+                                    </a>
                             </div>
                             <!--end::Links-->
                         </div>
@@ -167,7 +183,7 @@ style="direction:rtl" @endif
     </div>
     <!--end::Root-->
     <!--begin::Javascript-->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 
     <script>
         var hostUrl = "assets/";
@@ -176,7 +192,6 @@ style="direction:rtl" @endif
     <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
     <script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
 
-    <script src="{{ asset('assets/js/custom/authentication/sign-in/general.js') }}"></script>
     <script src="{{ asset('assets/js/global/scripts.js') }}"></script>
     <script src="{{ asset('assets/js/global/translations.js') }}"></script>
     <script src="{{ asset('assets/shared/js/global.js') }}"></script>
@@ -187,6 +202,15 @@ style="direction:rtl" @endif
         $(document).ready(function() {
             $("#submit-btn").prop('disabled', false);
             $("#submit-btn").attr('data-kt-indicator', '');
+
+            // إظهار / إخفاء كلمة المرور (العين)
+            $("#toggle-password").on('click', function() {
+                const inp = $("#login-password");
+                const show = inp.attr('type') === 'password';
+                inp.attr('type', show ? 'text' : 'password');
+                $("#eye-open").toggleClass('d-none', show);
+                $("#eye-closed").toggleClass('d-none', !show);
+            });
 
             window['onAjaxSuccess'] = (response) => {
                 console.log(response.url);

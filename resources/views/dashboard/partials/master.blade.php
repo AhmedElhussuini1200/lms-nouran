@@ -43,7 +43,10 @@
             <!--begin::Header-->
             @if (!session()->has('errors'))
                 <div id="loading-div">
-                    <img src="{{ asset('icon-192.png') }}" alt="loading">
+                    <div class="d-flex flex-column align-items-center gap-3">
+                        <img src="{{ asset(brand('logo')) }}" alt="{{ brand('site_name') }}">
+                        <span class="fw-bold text-gray-700">{{ brand('site_name') }}</span>
+                    </div>
                 </div>
             @endif
             @include('dashboard.partials.header')
@@ -133,10 +136,17 @@
     <!-- end::Toast -->
     <script>
         var sessionHasSuccess = {{ request()->session()->has('success') ? 1 : 0 }};
+        var sessionSuccessMessage = @json(session('success'));
 
         if (sessionHasSuccess) {
-            showToast()
+            showToast(sessionSuccessMessage || null)
         }
+
+        @if(session('error_message'))
+            if (typeof errorAlert === 'function') {
+                errorAlert(@json(session('error_message')), 6000);
+            }
+        @endif
         $(document).ready(function() {
             let mode = "{{ setting('theme_mode') ?? 'light' }}";
             localStorage.setItem("data-theme", mode);
@@ -146,14 +156,16 @@
         var favicon;
 
         $(document).ready(function() {
-            favicon = new Favico({
+            favicon = (typeof Favico !== 'undefined') ? new Favico({
                 animation: 'popFade'
-            });
+            }) : null;
 
-            if (favIconCounter > 0)
+            if (favIconCounter > 0 && favicon)
                 favicon.badge(favIconCounter);
 
-            KTLayoutSearch.init();
+            if (typeof KTLayoutSearch !== 'undefined' && document.querySelector('[data-kt-search-element]')) {
+                KTLayoutSearch.init();
+            }
         });
     </script>
 </body>

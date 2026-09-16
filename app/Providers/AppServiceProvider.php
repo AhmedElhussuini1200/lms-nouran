@@ -49,6 +49,46 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\Dashboard\Contracts\DashboardRepositoryInterface::class,
             \App\Repositories\Dashboard\Eloquent\DashboardRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\VideoRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\VideoRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\CourseRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\CourseRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\AssignmentRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\AssignmentRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\ExamRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\ExamRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\BrandingRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\BrandingRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\PaymentRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\PaymentRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\StatusRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\StatusRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\WhatsappTemplateRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\WhatsappTemplateRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\QuestionRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\QuestionRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Dashboard\Contracts\AttendanceRepositoryInterface::class,
+            \App\Repositories\Dashboard\Eloquent\AttendanceRepository::class
+        );
     }
 
     /**

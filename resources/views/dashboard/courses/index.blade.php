@@ -1,49 +1,17 @@
-@extends('layouts.app')
-
-@section('title', 'الحصص')
-
+@extends('dashboard.partials.master')
 @section('content')
-<div class="px-4 py-6 sm:px-0">
-    <div class="mb-6 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-900">الحصص</h1>
-        @if(auth()->user()->isTeacher())
-            <a href="{{ route('courses.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
-                إضافة حصة جديدة
-            </a>
-        @endif
-    </div>
-
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="divide-y divide-gray-200">
-            @forelse($courses as $course)
-                <div class="p-6 hover:bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <h3 class="text-lg font-medium text-gray-900">
-                                <a href="{{ route('courses.show', $course) }}" class="hover:text-indigo-600">
-                                    {{ $course->title }}
-                                </a>
-                            </h3>
-                            <p class="mt-2 text-sm text-gray-600">{{ $course->description }}</p>
-                            <div class="mt-4 flex items-center text-sm text-gray-500">
-                                <span>الصف: {{ $course->grade }}</span>
-                                <span class="mx-2">•</span>
-                                <span>التاريخ: {{ $course->scheduled_at->format('Y-m-d H:i') }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="p-8 text-center">
-                    <p class="text-gray-500">لا توجد حصص</p>
-                </div>
-            @endforelse
-        </div>
-
-        <div class="px-4 py-3 border-t border-gray-200">
-            {{ $courses->links() }}
-        </div>
-    </div>
-</div>
+<div class="card mb-7"><div class="card-body d-flex flex-column flex-md-row align-items-md-center py-6 px-6">
+<div class="flex-grow-1"><h2 class="fw-bold mb-2">{{ __('الحصص الدراسية') }}</h2><p class="text-muted mb-0">{{ __('جدول الحصص حسب الصف الدراسي') }}</p></div>
+<div class="mt-4 mt-md-0 d-flex gap-3">
+<form method="GET" action="{{ route('admin.courses.index') }}"><select data-placeholder="{{ __('الصف الدراسي') }}" data-control="select2" name="grade" class="form-select w-auto" onchange="this.form.submit()">@foreach($grades as $k=>$v)<option value="{{ $k }}" {{ request('grade')==$k?'selected':'' }}>{{ $v }}</option>@endforeach</select>@if(auth('admin')->user()->type==='admin' && isset($teachers))<select data-placeholder="{{ __('مدرس') }}" data-control="select2" name="teacher" class="form-select w-auto" onchange="this.form.submit()"><option value="all">{{ __('كل المدرسين') }}</option>@foreach($teachers as $t)<option value="{{ $t->id }}" {{ request('teacher')==$t->id?'selected':'' }}>{{ $t->name }}{{ $t->subject ? ' - '.$t->subject : '' }}</option>@endforeach</select>@endif</form>
+@if(in_array(auth('admin')->user()->type,['admin','teacher']))<a href="{{ route('admin.courses.create') }}" class="btn btn-primary"><i class="ki-outline ki-plus fs-2"></i><span class="ms-2">{{ __('إضافة حصة') }}</span></a>@endif
+<a href="{{ route('admin.courses.calendar') }}" class="btn btn-light-info"><i class="ki-outline ki-calendar fs-2"></i><span class="ms-2">{{ __('التقويم') }}</span></a>
+</div></div></div>
+<div class="row g-6 g-xl-9">@forelse($courses as $course)<div class="col-sm-6 col-xl-4"><div class="card card-flush h-100"><div class="card-body p-6">
+<a href="{{ route('admin.courses.show',$course->id) }}" class="fs-5 fw-bold text-gray-900 text-hover-primary d-block mb-2">{{ $course->title }}</a>
+<p class="text-muted fs-7 mb-4">{{ \Illuminate\Support\Str::limit($course->description,90) }}</p>
+<div class="d-flex justify-content-between align-items-center"><span class="badge badge-light-primary">{{ __($course->grade) }}</span><span class="text-muted fs-8">{{ $course->scheduled_at?->format('Y-m-d H:i') ?? '' }}</span></div>
+<div class="mt-4 pt-4 border-top text-muted fs-8">{{ $course->teacher->name ?? '' }}</div>
+</div></div></div>@empty<div class="col-12"><div class="card"><div class="card-body text-center text-muted py-10">{{ __('لا توجد حصص') }}</div></div></div>@endforelse</div>
+@if(method_exists($courses,'links'))<div class="mt-7 d-flex justify-content-center">{{ $courses->appends(request()->query())->links() }}</div>@endif
 @endsection
-

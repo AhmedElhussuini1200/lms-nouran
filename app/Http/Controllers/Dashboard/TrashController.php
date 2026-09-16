@@ -7,9 +7,7 @@ use App\Http\Controllers\Controller;
 class TrashController extends Controller
 {
     private static array $relations = [
-        'Admin'        => ['roles' => ['id', 'name_ar', 'name_en']],
-        'Mission'      => ['company', 'status', 'priority'],
-        'Extinguisher' => ['station', 'status'],
+        'Admin' => ['roles' => ['id', 'name_ar', 'name_en']],
     ];
 
     // public function index($modelName = 'Admin')
@@ -46,7 +44,7 @@ class TrashController extends Controller
             return response()->json($data);
         }
 
-        return view('dashboard.settings.trash');
+        return view('dashboard.trash');
     }
 
 

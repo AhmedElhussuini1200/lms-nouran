@@ -11,6 +11,7 @@ class Assignment extends Model
         'description',
         'grade',
         'teacher_id',
+        'subject',
         'due_date',
         'total_marks',
         'file_path',
@@ -25,7 +26,7 @@ class Assignment extends Model
 
     public function teacher()
     {
-        return $this->belongsTo(User::class, 'teacher_id');
+        return $this->belongsTo(Admin::class, 'teacher_id');
     }
 
     public function submissions()

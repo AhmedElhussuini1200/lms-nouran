@@ -1,32 +1,65 @@
 <?php
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Session;
-use PHPUnit\Framework\Attributes\Group;
-
-use App\Http\Controllers\Dashboard\RoleController;
 
 use App\Http\Controllers\Dashboard\AdminController;
 use App\Http\Controllers\Dashboard\TrashController;
 use App\Http\Controllers\Dashboard\VideoController;
+use App\Http\Controllers\Dashboard\CourseController;
+use App\Http\Controllers\Dashboard\AssignmentController;
+use App\Http\Controllers\Dashboard\ExamController;
+use App\Http\Controllers\Dashboard\BrandingController;
+use App\Http\Controllers\Dashboard\PaymentController;
+use App\Http\Controllers\Dashboard\StatusController;
+use App\Http\Controllers\Dashboard\RoleController;
+use App\Http\Controllers\Dashboard\AttendanceController;
+use App\Http\Controllers\Dashboard\WhatsappController;
+use App\Http\Controllers\Dashboard\WhatsappTemplateController;
 use App\Http\Controllers\Dashboard\ProfileController;
 use App\Http\Controllers\Dashboard\NotificationController;
 use App\Http\Controllers\Dashboard\SettingController as DashboardSettingController;
 use App\Http\Controllers\Dashboard\DashboardController;
 
-// ADMIN->middleware(['auth:admin', 'role:admin'])
-Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin', 'role:admin'])->group(function () {
+// كل المسجلين (admin/teacher/student/parent) يقدروا يفتحوا الداشبورد والفيديوهات
+// إدارة المستخدمين والإعدادات محمية بـ role:admin + authorize داخل الكنترولر
+Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(function () {
 
     // لوحة التحكم الرئيسية حسب نوع المستخدم (admin/teacher/student/parent)
     Route::get('/', [DashboardController::class, 'index'])->name('index');
-    /* begin Delete And restore */
-    // Route::get('/contracts/{id}/last-item', ['ContractItemController@getLastItemNumber'])->name('dashboard.admin.contractItems.lastItem');
+
+    /** ==================== LMS (Repository Pattern + owns middleware) =================== **/
+    // العزل على مستوى الراوت: كل مدرس يشوف حاجته بس (AdminService-style guards تبقى كحماية إضافية)
+    Route::resource('videos', VideoController::class)->middleware('owns');
+    Route::get('courses/{course}/attendance', [AttendanceController::class, 'mark'])->middleware('owns')->name('attendance.mark');
+    Route::post('courses/{course}/attendance', [AttendanceController::class, 'store'])->middleware('owns')->name('attendance.store');
+    Route::get('courses-events', [CourseController::class, 'events'])->name('courses.events');
+    Route::resource('courses', CourseController::class)->middleware('owns');
+    Route::resource('assignments', AssignmentController::class)->middleware('owns');
+    Route::resource('exams', ExamController::class)->middleware('owns');
+    Route::post('assignments/{assignment}/submit', [AssignmentController::class, 'submit'])->middleware('owns')->name('assignments.submit');
+    Route::post('submissions/{submission}/grade', [AssignmentController::class, 'grade'])->middleware('owns')->name('submissions.grade');
+    Route::post('submissions/{submission}/start-review', [AssignmentController::class, 'startReview'])->middleware('owns')->name('submissions.start-review');
+    Route::post('exams/{exam}/submit', [ExamController::class, 'submit'])->middleware('owns')->name('exams.submit');
+    Route::post('exams/{exam}/questions', [ExamController::class, 'addQuestion'])->middleware('owns')->name('exams.questions.store');
+    Route::delete('questions/{question}', [ExamController::class, 'deleteQuestion'])->middleware('owns')->name('questions.destroy');
+    Route::post('results/{result}/grade', [ExamController::class, 'grade'])->middleware('owns')->name('results.grade');
+    Route::get('branding', [BrandingController::class, 'index'])->name('branding.index');
+    Route::put('branding', [BrandingController::class, 'update'])->name('branding.update');
+    Route::get('payments/monthly-pdf', [PaymentController::class, 'monthlyPdf'])->name('payments.monthly-pdf');
+    Route::resource('payments', PaymentController::class)->except(['show']);
+    Route::get('statuses', [StatusController::class, 'index'])->name('statuses.index');
+    Route::put('statuses/{status}', [StatusController::class, 'update'])->name('statuses.update');
+    Route::get('whatsapp', [WhatsappController::class, 'index'])->name('whatsapp.index');
+    Route::get('whatsapp/logs', [WhatsappController::class, 'logs'])->name('whatsapp.logs');
+    Route::post('whatsapp/send', [WhatsappController::class, 'send'])->name('whatsapp.send');
+    Route::get('whatsapp/templates', [WhatsappTemplateController::class, 'index'])->name('whatsapp.templates');
+    Route::post('whatsapp/templates', [WhatsappTemplateController::class, 'store'])->name('whatsapp.templates.store');
+    Route::put('whatsapp/templates/{template}', [WhatsappTemplateController::class, 'update'])->name('whatsapp.templates.update');
+    Route::delete('whatsapp/templates/{template}', [WhatsappTemplateController::class, 'destroy'])->name('whatsapp.templates.destroy');
+    Route::resource('roles', RoleController::class)->except(['show']);
 
 
-    // Route::delete("admins/delete-selected", "AdminController@deleteSelected");
-    // Route::get("admins/restore-selected", "AdminController@restoreSelected");
     Route::resource('admins', AdminController::class);
 
 
@@ -52,20 +85,14 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin', 'role:admi
     /**  ====================NOTIFICATIONS======================  **/
 
     Route::post('/save-token', [NotificationController::class, 'saveToken'])->name('save-token');
-    Route::post('/send-notification', [NotificationController::class, 'sendNotification'])->name('send.notification');
     Route::get('notifications/{id}/mark_as_read', [NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
     Route::get('notifications/{type}/load-more/{next}', [NotificationController::class, 'loadMore'])->name('notifications.load_more');
     Route::get('notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all_as_read');
 
-    /**  ====================SETTINGS======================  **/
-    Route::prefix('settings')->name('settings.')->group(function () {
-        Route::resource('/', DashboardSettingController::class);
-        Route::resource('roles', RoleController::class);
-        Route::get('role/{role}/admins', [RoleController::class, 'admins'])
-            ->name('roles.admins');
+    /**  ====================SETTINGS & TRASH======================  **/
+    Route::get('settings', [DashboardSettingController::class, 'index'])->name('settings.index');
 
-        Route::get('trash/{modelName?}', [TrashController::class, 'index'])->name('trash');
-        Route::get('trash/{modelName}/{id}', [TrashController::class, 'restore']);
-        Route::delete('trash/{modelName}/{id}', [TrashController::class, 'forceDelete']);
-    });
+    Route::get('trash/{modelName?}', [TrashController::class, 'index'])->name('trash')->where('modelName', 'Admin');
+    Route::get('trash/{modelName}/{id}', [TrashController::class, 'restore'])->where('modelName', 'Admin');
+    Route::delete('trash/{modelName}/{id}', [TrashController::class, 'forceDelete'])->where('modelName', 'Admin');
 });

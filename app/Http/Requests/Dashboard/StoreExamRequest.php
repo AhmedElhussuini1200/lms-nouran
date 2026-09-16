@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Http\Requests\Dashboard;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreExamRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        $user = auth('admin')->user();
+        return $user && in_array($user->type, ['admin', 'teacher']);
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'grade' => ['required', Rule::in(['1_secondary', '2_secondary', '3_secondary'])],
+            'subject' => ['nullable', 'string', 'max:255'],
+            'exam_date' => ['nullable', 'date'],
+            'duration_minutes' => ['nullable', 'integer', 'min:1'],
+            'total_marks' => ['nullable', 'numeric', 'min:0'],
+        ];
+    }
+}

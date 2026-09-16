@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'enabled' => env('WHATSAPP_ENABLED', false),
+        'provider' => env('WHATSAPP_PROVIDER', 'meta'), // meta | callmebot | gateway | evolution
+        'token' => env('WHATSAPP_TOKEN'),
+        'phone_id' => env('WHATSAPP_PHONE_ID'),
+        'callmebot_apikey' => env('WHATSAPP_CALLMEBOT_KEY'), // مفتاح افتراضي (CallMeBot مجاني)
+        'gateway_url' => env('WHATSAPP_GATEWAY_URL', 'http://127.0.0.1:3100'),
+        'gateway_key' => env('WHATSAPP_GATEWAY_KEY'),
+        'evolution_url' => env('WHATSAPP_EVOLUTION_URL', 'http://localhost:8080'),
+        'evolution_instance' => env('WHATSAPP_EVOLUTION_INSTANCE', 'lms'),
+        'evolution_key' => env('WHATSAPP_EVOLUTION_KEY'),
+    ],
+
 ];

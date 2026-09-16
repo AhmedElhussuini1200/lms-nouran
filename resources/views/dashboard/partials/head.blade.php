@@ -1,8 +1,19 @@
-<title>{{ __('Mission') }}</title>
+<title>{{ brand('site_name', __('Mission')) }}</title>
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="theme-primary" content="{{ brand('primary_color', '#1b84ff') }}">
+<meta name="theme-secondary" content="{{ brand('secondary_color', '#17c653') }}">
+<style>
+    :root { --brand-primary: {{ brand('primary_color', '#1b84ff') }}; --brand-secondary: {{ brand('secondary_color', '#17c653') }}; }
+    .btn-primary, .badge-primary { background-color: var(--brand-primary) !important; border-color: var(--brand-primary) !important; }
+    .text-primary { color: var(--brand-primary) !important; }
+    .btn-success { background-color: var(--brand-secondary) !important; border-color: var(--brand-secondary) !important; }
+</style>
 <meta charset="utf-8" />
-<link rel="shortcut icon" href="{{ isDarkMode() ? asset('favicon.ico') : asset('favicon.ico') }}" />
+<link rel="shortcut icon" href="{{ asset(brand('logo')) }}" />
+<link rel="apple-touch-icon" href="{{ asset(brand('logo')) }}" />
 <!--begin::Fonts-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
 <!--begin::Fonts(mandatory for all pages)-->
@@ -29,6 +40,25 @@
 <style>
     * :not(i) {
         font-family: "Cairo", Helvetica, "sans-serif" !important;
+    }
+
+    /* إصلاح مكان علامة التحقق في RTL حتى لا تتداخل مع الكلام */
+    [dir="rtl"] .form-control.is-valid,
+    [dir="rtl"] .form-select.is-valid {
+        background-position: left calc(0.375em + 0.1875rem) center !important;
+        padding-left: calc(1.5em + 0.75rem) !important;
+        padding-right: 0.75rem !important;
+    }
+    [dir="rtl"] .form-control.is-invalid,
+    [dir="rtl"] .form-select.is-invalid {
+        background-position: left calc(0.375em + 0.1875rem) center !important;
+        padding-left: calc(1.5em + 0.75rem) !important;
+        padding-right: 0.75rem !important;
+    }
+    /* منع تحديد نص الفيديو والسحب */
+    .no-download, .no-download iframe {
+        -webkit-user-select: none;
+        user-select: none;
     }
 
     input[type=number].no-arrow {

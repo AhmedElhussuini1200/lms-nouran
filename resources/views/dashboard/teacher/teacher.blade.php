@@ -12,11 +12,10 @@
     </style>
 @endpush
 @section('title', 'لوحة تحكم المعلم')
-@endsection
 @section('content')
 <div class="px-4 py-6 sm:px-0">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">مرحباً، {{ auth()->user()->name }}</h1>
+        <h1 class="text-2xl font-bold text-gray-900">مرحباً، {{ auth('admin')->user()->name }}</h1>
         <p class="text-gray-600">لوحة تحكم المعلم</p>
     </div>
 
@@ -109,7 +108,7 @@
                         <h4 class="text-sm font-medium text-gray-900">{{ $course->title }}</h4>
                         <p class="text-sm text-gray-500 mt-1">{{ $course->description }}</p>
                         <p class="text-xs text-gray-400 mt-2">تاريخ الحصة:
-                            {{ $course->scheduled_at->format('Y-m-d H:i') }}</p>
+                            {{ $course->scheduled_at?->format('Y-m-d H:i') ?? '—' }}</p>
                     </div>
                 @empty
                     <p class="text-sm text-gray-500">لا توجد حصص</p>
@@ -128,7 +127,7 @@
                         <h4 class="text-sm font-medium text-gray-900">{{ $assignment->title }}</h4>
                         <p class="text-sm text-gray-500 mt-1">{{ $assignment->description }}</p>
                         <p class="text-xs text-gray-400 mt-2">تاريخ الاستحقاق:
-                            {{ $assignment->due_date->format('Y-m-d H:i') }}</p>
+                            {{ $assignment->due_date?->format('Y-m-d H:i') ?? '—' }}</p>
                     </div>
                 @empty
                     <p class="text-sm text-gray-500">لا توجد واجبات</p>
@@ -140,7 +139,7 @@
 @endsection
 @push('scripts')
 <script>
-    let userType = @json(Auth::user()->type ?? null);
+    let userType = @json(auth('admin')->user()->type ?? null);
     // console.log(userType)
 </script>
 <script src="{{ asset('assets/js/global/datatable-config.js') }}"></script>

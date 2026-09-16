@@ -2,22 +2,10 @@
 
 namespace App\Services\Dashboard;
 
-
-use App\Models\City;
 use App\Models\Role;
 use App\Models\Admin;
-use App\Models\Sector;
-use App\Models\Company;
-use App\Models\Contract;
-use App\Models\District;
-use Illuminate\Support\Arr;
-use App\Models\ContractType;
-use App\Models\Municipality;
-use App\Models\Neighborhood;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Dashboard\StoreAdminRequest;
 use App\Repositories\Dashboard\Contracts\AdminRepositoryInterface;
-
 
 class AdminService
 {
@@ -30,259 +18,140 @@ class AdminService
 
     public function index($request)
     {
-        $user = auth()->user();
-
-        // تحضير المتغيرات الأساسية للـ View
-        $cities = City::with('districts.neighborhoods.sectors')->get();
-        $isBlockeds = [
-            ''  => __('All'),
-            0   => __('Active'),
-            1   => __('Blocked'),
-        ];
-        $employees = [];
-
-        // 🔹 الحالة الخاصة بطلب Ajax
-        if ($request->ajax()) {
-            $query = $this->adminRepository->index($request);
-            return response()->json($query);
+        abort_unless(auth('admin')->user()->type === 'admin', 403);
+        if ($request->ajax() && $request->has('draw')) {
+            return response()->json($this->adminRepository->index($request));
         }
 
-        // 🔹 لو المستخدم مدير، هات الموظفين اللي تحته وفي نفس المنطقة
-        if ($user->type === 'admin') {
-            $employees = Admin::where('reporting_to_id', $user->id)
-                ->get();
-        }
-        $roles = Role::where('company_id', null)->get();
+        $admins = $this->adminRepository->index($request);
+        $types = ['admin' => __('إدمن'), 'teacher' => __('مدرس'), 'student' => __('طالب'), 'parent' => __('ولي أمر')];
+        $grades = ['' => __('الكل'), '1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
 
-
-        // مفيش داعي نجيب كل الإداريين لو هنفلترهم بعدين
-        $admins = Admin::with('company')->get();
-
-
-
-        // $admins = $admins->get();
-
-        $types = [
-            'admin' => __("Amana"),
-            'consultant' => __("consultant"),
-            'contractor' => __("contractor"),
-        ];
-
-
-
-        return view('dashboard.admin.admins.index', compact(
-            'cities',
-            'admins',
-            'roles',
-            'types',
-            'isBlockeds',
-            'employees'
-        ));
+        return view('dashboard.admin.admins.index', compact('admins', 'types', 'grades'));
     }
-
 
     public function show($admin)
     {
-        // جلب البيانات من الـ repository
         $admin = $this->adminRepository->show($admin);
 
-        $roles = Role::all();
+        $profile = null;
+        if ($admin->type === 'student') {
+            $submissions = \App\Models\AssignmentSubmission::with(['assignment:id,title,total_marks', 'status'])
+                ->where('student_id', $admin->id)->latest()->get();
+            $results = \App\Models\ExamResult::with(['exam:id,title,total_marks', 'status'])
+                ->where('student_id', $admin->id)->latest()->get();
+            $absences = \App\Models\Attendance::with('course:id,title')
+                ->where('student_id', $admin->id)->where('status', 'absent')
+                ->orderByDesc('date')->limit(10)->get();
+            $absenceCount = \App\Models\Attendance::where('student_id', $admin->id)->where('status', 'absent')->count();
+            $presentCount = \App\Models\Attendance::where('student_id', $admin->id)->where('status', 'present')->count();
+            $payments = \App\Models\Payment::with('status')->where('student_id', $admin->id)->orderByDesc('month')->get();
+            $assignedIds = $submissions->pluck('assignment_id');
+            $missing = \App\Models\Assignment::where('grade', $admin->grade)
+                ->whereNotIn('id', $assignedIds)->orderBy('due_date')->limit(5)->get();
 
-        $cities = City::with('districts.neighborhoods.sectors')->get();
+            $profile = [
+                'submissions' => $submissions,
+                'results' => $results,
+                'absences' => $absences,
+                'absenceCount' => $absenceCount,
+                'presentCount' => $presentCount,
+                'payments' => $payments,
+                'missing' => $missing,
+                'avg' => $results->avg('marks_obtained') ? round($results->avg('marks_obtained'), 1) : null,
+                'points' => $submissions->count() * 10 + $results->count() * 20,
+                'dueTotal' => $payments->sum('amount') - $payments->sum('paid_amount'),
+            ];
+        }
 
-        $types = [
-            'admin'      => __('Amana'),
-            'consultant' => __('consultant'),
-            'contractor' => __('contractor'),
-        ];
-
-        return view('dashboard.admin.admins.show', compact('admin', 'cities', 'roles', 'types'));
+        return view('dashboard.admin.admins.show', compact('admin', 'profile'));
     }
-
-
 
     public function create()
     {
-        $cities = City::with('districts.neighborhoods.sectors')->get();
-        $companies = Company::select('id', 'name_ar', 'email', 'phone', 'type')
-            ->whereDoesntHave('superadmin')
-            ->get();
-        $roles = Role::where('company_id', '=', null)
-            ->get();
+        abort_unless(auth('admin')->user()->type === 'admin', 403);
+        $roles = Role::all();
+        $types = ['admin' => __('إدمن'), 'teacher' => __('مدرس'), 'student' => __('طالب'), 'parent' => __('ولي أمر')];
+        $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
 
-        $contractTypes = ContractType::all();
-        $contracts = Contract::all();
-
-        $municipalities = Municipality::all();
-
-        $managers = Admin::all();
-        // dd($companies);
-
-
-        return view('dashboard.admin.admins.create', compact(
-            'cities',
-            'companies',
-            'contractTypes',
-            'managers',
-            'roles',
-            'contracts',
-            'municipalities'
-        ));
+        return view('dashboard.admin.admins.create', compact('roles', 'types', 'grades'));
     }
 
-    // Service
     public function store(StoreAdminRequest $request)
     {
-        // في Laravel Controller
         $data = $request->validated();
-        if ($request->hasFile('stamp')) {
-            $data['stamp'] = uploadImageToDirectory($request->file('stamp'), 'Images/Admins/stamps'); //path to directory in storage public folder Images/Images/Admins/stamps
+        $admin = $this->adminRepository->store($data);
+
+        if ($request->ajax()) {
+            return response()->json(['message' => __('تمت الإضافة بنجاح'), 'url' => route('admin.admins.show', $admin->id)]);
         }
 
-        if ($request->hasFile('signature')) {
-            $data['signature'] = uploadImageToDirectory($request->file('signature'), 'Images/Admins/signatures'); //path to directory in storage public folder Images/Images/Admins/signatures
-        }
-        return $this->adminRepository->store($data);
+        return redirect()->route('admin.admins.show', $admin->id)->with('success', __('تمت الإضافة بنجاح'));
     }
-
 
     public function edit($admin)
     {
-
-        $cities = City::with('districts.neighborhoods.sectors')->get();
-
-        $companies = Company::all();
-        $contractTypes = ContractType::all();
-        $municipalities = Municipality::all();
-
-        $managers = Admin::where('id', '!=', $admin->id)->get();
-
-
-        // dd($managers);
-        $contracts = Contract::all();
         $roles = Role::all();
-        $types = [
-            'admin'      => __('Amana'),
-            'consultant' => __('consultant'),
-            'contractor' => __('contractor'),
-        ];
+        $types = ['admin' => __('إدمن'), 'teacher' => __('مدرس'), 'student' => __('طالب'), 'parent' => __('ولي أمر')];
+        $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
+        $students = $admin->type === 'parent' ? Admin::where('type', 'student')->orderBy('name')->get(['id', 'name', 'grade']) : collect();
 
-
-        return view('dashboard.admin.admins.edit', compact(
-            'admin',
-            'cities',
-            'municipalities',
-            'companies',
-            'contractTypes',
-            'contracts',
-            'managers',
-            'roles',
-            'types'
-        ));
+        return view('dashboard.admin.admins.edit', compact('admin', 'roles', 'types', 'grades', 'students'));
     }
 
     public function update($data, $admin)
     {
-        $updateData = $data;
-
-        // ✅ معالجة كلمة المرور
-        if (empty($updateData['password'])) {
-            unset($updateData['password']);
+        if (empty($data['password'])) {
+            unset($data['password']);
         }
 
-        // معالجة الختم (Stamp)
-        if (!empty($data['stamp']) && $data['stamp'] instanceof \Illuminate\Http\UploadedFile) {
-            if (!empty($admin->stamp) && file_exists(storage_path('app/public/Images/Admins/stamps/' . $admin->stamp))) {
-                unlink(storage_path('app/public/Images/Admins/stamps/' . $admin->stamp));
-            }
-            $updateData['stamp'] = uploadImageToDirectory($data['stamp'], 'Images/Admins/stamps');
-        } else {
-            unset($updateData['stamp']);
+        // ربط الأبناء بولي الأمر
+        if ($admin->type === 'parent' && array_key_exists('children', $data)) {
+            $admin->students()->sync($data['children'] ?? []);
+            unset($data['children']);
         }
 
-        // معالجة الإمضاء (Signature)
-        if (!empty($data['signature']) && $data['signature'] instanceof \Illuminate\Http\UploadedFile) {
-            if (!empty($admin->signature) && file_exists(storage_path('app/public/Images/Admins/signatures/' . $admin->signature))) {
-                unlink(storage_path('app/public/Images/Admins/signatures/' . $admin->signature));
-            }
-            $updateData['signature'] = uploadImageToDirectory($data['signature'], 'Images/Admins/signatures');
-        } else {
-            unset($updateData['signature']);
+        $this->adminRepository->update($data, $admin);
+
+        if (request()->ajax()) {
+            return response()->json(['message' => __('تم التحديث بنجاح'), 'url' => route('admin.admins.show', $admin->id)]);
         }
 
-        return $this->adminRepository->update($updateData, $admin);
+        return redirect()->route('admin.admins.show', $admin->id)->with('success', __('تم التحديث بنجاح'));
     }
-
-
 
     public function destroy($data, $admin)
     {
-        if ($admin->id === auth()->id()) {
-            abort(400, __('You cannot delete your own account'));
+        if ($admin->id === auth('admin')->id()) {
+            abort(400, __('لا يمكنك حذف حسابك'));
         }
 
-        abort_if(
-            $admin->employees()->exists(),
-            400,
-            __('This admin cannot be deleted because it is linked to existing tasks or employees')
-        );
+        $isAjax = $data instanceof \Illuminate\Http\Request ? $data->ajax() : request()->ajax();
+        $this->adminRepository->destroy($data, $admin);
 
-        if ($data->ajax()) {
-            return $this->adminRepository->destroy($data, $admin);
+        if ($isAjax) {
+            return response()->json(['message' => __('تم الحذف بنجاح'), 'url' => route('admin.admins.index')]);
         }
+
+        return redirect()->route('admin.admins.index')->with('success', __('تم الحذف بنجاح'));
     }
-    //   public function deleteSelected($data)
-    //     {
-    //         return $this->adminRepository->deleteSelected($data);
-    //     }
 
     public function deleteSelected($data)
     {
-        $adminIds = $data->input('selected_items_ids', []);
-
-        // ✅ التحقق من أن كل مستخدم صالح للحذف
-        foreach ($adminIds as $id) {
-            $admin = $this->adminRepository->find($id);
-
-            if (!$admin) {
-                abort(404, __('admin not found'));
-            }
-
-            abort_if(
-                $admin->employees()->exists(),
-                400,
-                __('This admin cannot be deleted because it is linked to existing tasks or employees')
-            );
-        }
-
-        // ✅ استبعاد المستخدم الحالي مباشرة من قاعدة البيانات
-        $ids = Admin::whereIn('id', $adminIds)
-            ->where('id', '!=', auth()->id())
-            ->pluck('id')     // ناخد IDs فقط
-            ->toArray();      // نحولها لمصفوفة عادية
+        $ids = collect($data['selected_items_ids'] ?? [])->reject(fn ($id) => (int) $id === (int) auth('admin')->id())->values()->toArray();
 
         return $this->adminRepository->deleteSelected($ids);
     }
-
 
     public function restoreSelected($data)
     {
         return $this->adminRepository->restoreSelected($data);
     }
+
     public function restore($data, $admin)
     {
         return $this->adminRepository->restore($data, $admin);
     }
-
-    private function checkContractExpiration(array $updateData): array
-    {
-        if (!empty($updateData['end_contract_date']) && now()->greaterThan($updateData['end_contract_date'])) {
-            $updateData['is_blocked'] = true;
-        }
-
-        return $updateData;
-    }
-
 
     public function status($admin)
     {

@@ -16,7 +16,7 @@ class ProfileService
     public function getProfileInfo()
     {
         $admin = $this->profileRepository->getProfileInfo();
-        return view('dashboard.admin.profile-info', compact('admin'));
+        return view('dashboard.profile-info', compact('admin'));
     }
 
     public function updateProfileInfo(array $data)

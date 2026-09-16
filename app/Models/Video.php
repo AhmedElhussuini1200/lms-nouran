@@ -11,6 +11,7 @@ class Video extends Model
         'description',
         'grade',
         'teacher_id',
+        'subject',
         'video_url',
         'thumbnail_url',
         'duration_seconds',
@@ -19,6 +20,6 @@ class Video extends Model
 
     public function teacher()
     {
-        return $this->belongsTo(User::class, 'teacher_id');
+        return $this->belongsTo(Admin::class, 'teacher_id');
     }
 }

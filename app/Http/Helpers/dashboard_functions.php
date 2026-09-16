@@ -48,7 +48,7 @@ if (!function_exists('uploadImageToDirectory')) {
         $model     = Str::plural($model);
         $model     = Str::ucfirst($model);
         $path      = "/Images/$model";
-        $imageName = str_replace(' ', '', 'webstdy_' . time() . "_" . random_int(10, 99) . $imageFile->getClientOriginalName());  // Set Image name
+        $imageName = str_replace(' ', '', 'lms_' . time() . "_" . random_int(10, 99) . $imageFile->getClientOriginalName());  // Set Image name
         $imageFile->storeAs($path, $imageName, 'public');
         return $imageName;
     }
@@ -290,6 +290,59 @@ if (!function_exists('getClassIfUrlContains')) {
     }
 }
 
+
+if (!function_exists('notifyAdmin')) {
+    function notifyAdmin($adminId, $title, $message, $type = 'info', $link = null)
+    {
+        try {
+            return \App\Models\Notification::create([
+                'admin_id' => $adminId,
+                'title' => $title,
+                'message' => $message,
+                'type' => $type,
+                'link' => $link,
+            ]);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+}
+
+if (!function_exists('notifyStudentsByGrade')) {
+    // إشعار جماعي لطلاب صف معين + أولياء أمورهم
+    function notifyStudentsByGrade($grade, $title, $message, $type = 'info', $link = null)
+    {
+        $students = \App\Models\Admin::where('type', 'student')->where('grade', $grade)->get();
+        foreach ($students as $student) {
+            notifyAdmin($student->id, $title, $message, $type, $link);
+            foreach ($student->parents as $parent) {
+                notifyAdmin($parent->id, $title, $message, $type, $link);
+            }
+        }
+    }
+}
+
+if (!function_exists('brand')) {
+    // الهوية البصرية: تقرأ من جدول settings مع قيم افتراضية
+    function brand($key, $default = null)
+    {
+        static $cache = null;
+        if ($cache === null) {
+            try {
+                $cache = \App\Models\Setting::pluck('value', 'key')->toArray();
+            } catch (\Throwable $e) {
+                $cache = [];
+            }
+        }
+        $defaults = [
+            'site_name' => 'منصة نوران التعليمية',
+            'primary_color' => '#1b84ff',
+            'secondary_color' => '#17c653',
+            'logo' => 'assets/logo/lms-logo-letter-design-initials-linked-circle-uppercase-monogram-typography-technology-business-real-estate-brand-393870301.webp',
+        ];
+        return $cache[$key] ?? $defaults[$key] ?? $default;
+    }
+}
 
 if (!function_exists('abilities')) {
     function abilities()

@@ -75,6 +75,6 @@ class ExistButDeletedDashboard implements Rule
     {
         $modelName = class_basename($this->model);
 
-        return " " . __("There is ") . __(strtolower($modelName)) . __(" with the same ") . __(":attribute") . __(" but in the trash ") . "<a href='" . route('dashboard.admin.trash.restore', [$modelName, $this->model->id]) . "' class='restore-item' style='text-decoration:underline;'>" . __('do you want to restore ?') . "</a>";
+        return " " . __("There is ") . __(strtolower($modelName)) . __(" with the same ") . __(":attribute") . __(" but in the trash ") . "<a href='" . url("dashboard/trash/{$modelName}/{$this->model->id}") . "' class='restore-item' style='text-decoration:underline;'>" . __('do you want to restore ?') . "</a>";
     }
 }

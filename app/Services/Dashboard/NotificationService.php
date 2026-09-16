@@ -16,8 +16,12 @@ class NotificationService
     public function markAsRead($id)
     {
         $notification = $this->notificationRepository->markAsRead($id);
-        $notification->markAsRead();
-        return redirect($notification->data['url']);
+
+        if ($notification?->link) {
+            return redirect($notification->link);
+        }
+
+        return redirect()->route('admin.index');
     }
     public function markAllAsRead()
     {

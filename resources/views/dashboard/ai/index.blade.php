@@ -7,6 +7,7 @@
 <button class="btn btn-primary">{{ __('اسأل') }}</button></div></form>
 @if(isset($result))<div class="alert alert-light mt-4" style="white-space:pre-line">{{ $result['answer'] }}</div>
 @foreach(($result['courses'] ?? []) as $c)<div>📚 {{ $c->title }}</div>@endforeach
-@foreach(($result['videos'] ?? []) as $v)<div>🎬 {{ $v->title }}</div>@endforeach@endif
+@foreach(($result['videos'] ?? []) as $v)<div>🎬 {{ $v->title }}</div>@endforeach
+@endif
 </div></div>
 @endsection

@@ -95,7 +95,8 @@
         @else<span class="rec__lvl badge badge-light-success">{{ __('مدفوع') }}</span>@endif</div>
         @empty<p class="text-muted">{{ __('لا فواتير') }}</p>@endforelse
         @if($myCertificates->isNotEmpty())<div class="separator my-3"></div>
-        @foreach($myCertificates as $c)<a href="{{ route('admin.certificates.pdf',$c->id) }}" class="rec"><span class="rec__icon">🎓</span><span class="rec__txt">{{ $c->exam->title ?? '' }}</span><span class="rec__lvl badge badge-light-primary">PDF</span></a>@endforeach@endif
+        @foreach($myCertificates as $c)<a href="{{ route('admin.certificates.pdf',$c->id) }}" class="rec"><span class="rec__icon">🎓</span><span class="rec__txt">{{ $c->exam->title ?? '' }}</span><span class="rec__lvl badge badge-light-primary">PDF</span></a>@endforeach
+        @endif
         </div></div></div>
 </div>
 @endsection

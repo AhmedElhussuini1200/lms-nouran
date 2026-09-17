@@ -69,10 +69,10 @@ class ExamRepository implements ExamRepositoryInterface
     public function submit($exam, array $data)
     {
         $data['status_id'] = $data['status_id'] ?? \App\Models\Status::idFor(\App\Models\Status::SUBMITTED) ?? null;
-        return ExamResult::updateOrCreate(
-            ['exam_id' => $exam->id, 'student_id' => $data['student_id']],
-            $data + ['submitted_at' => now()]
-        );
+        // صف مستقل لكل محاولة — لا مسح للمحاولات السابقة
+        $data['attempt_no'] = $data['attempt_no'] ?? ((int) ExamResult::where('exam_id', $exam->id)->where('student_id', $data['student_id'])->max('attempt_no') + 1);
+
+        return ExamResult::create($data + ['exam_id' => $exam->id, 'submitted_at' => now()]);
     }
 
     public function grade($result, array $data)
@@ -83,6 +83,14 @@ class ExamRepository implements ExamRepositoryInterface
 
     public function myResult($exam, $studentId)
     {
-        return ExamResult::where('exam_id', $exam->id)->where('student_id', $studentId)->first();
+        // الأعلى درجة (ثم الأحدث عند التعادل)
+        return ExamResult::where('exam_id', $exam->id)->where('student_id', $studentId)
+            ->orderByDesc('marks_obtained')->latest()->first();
+    }
+
+    public function myAttempts($exam, $studentId)
+    {
+        return ExamResult::where('exam_id', $exam->id)->where('student_id', $studentId)
+            ->with('status')->orderBy('attempt_no')->get();
     }
 }

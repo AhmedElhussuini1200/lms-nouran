@@ -53,6 +53,9 @@ class OnlinePaymentController extends Controller
             'paid_at' => now(),
         ]);
 
+        // عمولة المدرس على التحصيل
+        \App\Http\Controllers\Dashboard\GrowthController::teacherCommission($payment->fresh());
+
         foreach ($payment->student->parents ?? [] as $parent) {
             notifyAdmin($parent->id, __('تم استلام دفعة'), $payment->student->name . ' - ' . $request->paid_amount . ' ج', 'success', route('admin.payments.index'));
             $whatsapp->send($parent->phone ?? '', __('تم استلام دفعة') . ': ' . $request->paid_amount . ' ج - ' . __('المرجع') . ': ' . ($payment->transaction_ref ?? '-'), $parent->whatsapp_key ?? '', $parent->id);

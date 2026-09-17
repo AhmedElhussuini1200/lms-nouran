@@ -97,7 +97,10 @@
 <span>{{ __('اضغط بدء لحساب المؤقت') }}</span>
 <button type="button" id="btn-start" class="btn btn-sm btn-warning">{{ __('بدء الامتحان') }}</button>
 </div>
-@if($myResult)<div class="alert alert-{{ $myResult->status?->color ?? 'success' }}">{{ __('تم التسليم') }} @if(!is_null($myResult->marks_obtained)) • {{ __('درجتك') }}: <b>{{ $myResult->marks_obtained }}</b> @endif</div>@endif
+@if($myResult)<div class="alert alert-{{ $myResult->status?->color ?? 'success' }}">{{ __('أفضل درجة') }}: <b>{{ $myResult->marks_obtained }}</b> ({{ __('محاولة') }} {{ $myResult->attempt_no }})</div>@endif
+@if(!empty($myAttempts) && $myAttempts->count() > 1)
+<div class="d-flex flex-wrap gap-2 mb-4">@foreach($myAttempts as $a)<span class="badge badge-light-{{ ($myResult && $a->id === $myResult->id) ? 'success' : 'secondary' }}">{{ __('محاولة') }} {{ $a->attempt_no }}: {{ $a->marks_obtained }}</span>@endforeach</div>
+@endif
 @foreach($qlist as $i => $q)
 <div class="border rounded p-4 mb-4">
 <p class="fw-bold">{{ __('سؤال') }} {{ $i+1 }}: {{ $q->question }} <span class="badge badge-light-success ms-2">{{ $q->marks }}</span></p>

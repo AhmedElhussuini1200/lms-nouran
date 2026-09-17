@@ -51,17 +51,20 @@ class AchievementController extends Controller
         ]);
     }
 
-    // لوحة الصدارة لكل صف
+    // لوحة الصدارة لكل صف (أفضل درجة لكل امتحان + النقاط)
     public function leaderboard(Request $request)
     {
         $grade = $request->get('grade', '3_secondary');
         $board = Admin::where('type', 'student')->where('grade', $grade)
-            ->withSum(['examResults as total_marks' => fn ($q) => $q->whereHas('status', fn ($s) => $s->where('slug', 'graded'))], 'marks_obtained')
             ->withCount(['examResults as exams_count'])
             ->get()
             ->map(function ($s) {
+                // أفضل درجة لكل امتحان (حتى لا تتضخم المحاولات المتعددة)
+                $s->total_marks = (float) \App\Models\ExamResult::where('student_id', $s->id)
+                    ->selectRaw('exam_id, MAX(marks_obtained) as best')
+                    ->groupBy('exam_id')->get()->sum('best');
                 $s->total_points = (int) StudentPoint::where('student_id', $s->id)->sum('points');
-                $s->score = (float) ($s->total_marks ?? 0) + $s->total_points;
+                $s->score = $s->total_marks + $s->total_points;
                 return $s;
             })
             ->sortByDesc('score')->values()->take(20);

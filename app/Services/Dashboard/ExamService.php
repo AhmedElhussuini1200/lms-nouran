@@ -67,18 +67,18 @@ class ExamService
         $user = auth('admin')->user();
         $myResult = $user->type === 'student' ? $this->examRepository->myResult($exam, $user->id) : null;
 
-        // خلط الأسئلة لو مفعّل (للطالب فقط)
+        // خلط الأسئلة لو مفعّل (للطالب فقط) — ترتيب حتمي بدون المساس بـ srand العامة
         $questions = $exam->questions;
         if ($exam->shuffle_questions && $user->type === 'student') {
-            $seed = (int) ($user->id . date('Ymd'));
-            srand($seed);
-            $questions = $questions->shuffle();
+            $salt = $user->id . '|' . date('Ymd') . '|' . $exam->id;
+            $questions = $questions->sortBy(fn ($q) => hexdec(substr(md5($salt . '|' . $q->id), 0, 8)))->values();
         }
 
         $attemptsUsed = $user->type === 'student' ? $exam->attemptsUsed($user->id) : 0;
         $canAttempt = $user->type !== 'student' || $exam->canAttempt($user->id);
+        $myAttempts = $user->type === 'student' ? $this->examRepository->myAttempts($exam, $user->id) : collect();
 
-        return view('dashboard.exams.show', compact('exam', 'myResult', 'questions', 'attemptsUsed', 'canAttempt'));
+        return view('dashboard.exams.show', compact('exam', 'myResult', 'myAttempts', 'questions', 'attemptsUsed', 'canAttempt'));
     }
 
     public function edit(Exam $exam)
@@ -168,19 +168,24 @@ class ExamService
             'status_id' => Status::idFor($hasEssay ? Status::UNDER_REVIEW : Status::GRADED),
         ];
 
+        // ربط النتيجة برقم المحاولة المفتوحة (أو التالية إن لم توجد)
+        $data['attempt_no'] = $attempt?->attempt_no
+            ?? ((int) \App\Models\ExamResult::where('exam_id', $exam->id)->where('student_id', $studentId)->max('attempt_no') + 1);
+
         $this->examRepository->submit($exam, $data);
 
-        // قفل المحاولة الحالية
-        $attempt?->update([
-            'submitted_at' => now(),
-            'tab_switches' => (int) $request->input('tab_switches', $attempt->tab_switches ?? 0),
-        ]);
-        // لو مفيش محاولة مفتوحة (امتحان قديم قبل الميزة) سجّل واحدة مقفولة
-        if (! $attempt) {
+        // قفل المحاولة الحالية بنفس الرقم
+        if ($attempt) {
+            $attempt->update([
+                'submitted_at' => now(),
+                'tab_switches' => (int) $request->input('tab_switches', $attempt->tab_switches ?? 0),
+            ]);
+        } else {
+            // لو مفيش محاولة مفتوحة (امتحان قديم قبل الميزة) سجّل واحدة مقفولة بنفس الرقم
             \App\Models\ExamAttempt::create([
                 'exam_id' => $exam->id,
                 'student_id' => $studentId,
-                'attempt_no' => $exam->attempts()->where('student_id', $studentId)->count() + 1,
+                'attempt_no' => $data['attempt_no'],
                 'started_at' => now(),
                 'submitted_at' => now(),
                 'tab_switches' => (int) $request->input('tab_switches', 0),

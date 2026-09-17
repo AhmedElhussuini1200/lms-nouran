@@ -10,6 +10,7 @@ class ExamResult extends Model
     protected $fillable = [
         'exam_id',
         'student_id',
+        'attempt_no',
         'status_id',
         'marks_obtained',
         'answers',

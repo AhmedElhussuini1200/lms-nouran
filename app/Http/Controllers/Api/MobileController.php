@@ -115,7 +115,7 @@ class MobileController extends Controller
         $grade = $request->get('grade', $request->user()->grade ?? '3_secondary');
         $board = Admin::where('type', 'student')->where('grade', $grade)->get()->map(function ($s) {
             $s->points = (int) StudentPoint::where('student_id', $s->id)->sum('points');
-            $s->avg = round((float) (ExamResult::where('student_id', $s->id)->avg('marks_obtained') ?? 0), 1);
+            $s->avg = round((float) (\App\Models\ExamResult::where('student_id', $s->id)->selectRaw('exam_id, MAX(marks_obtained) as best')->groupBy('exam_id')->get()->avg('best') ?? 0), 1);
             return $s->only(['id', 'name', 'points', 'avg']);
         })->sortByDesc('points')->values()->take(20);
 

@@ -1,4 +1,5 @@
 @extends('dashboard.partials.master')
+@include('dashboard.partials.design-system')
 @push('styles')
     <link href="{{ asset('assets/css/datatables' . (isDarkMode() ? '.dark' : '') . '.bundle.css') }}" rel="stylesheet"
         type="text/css" />

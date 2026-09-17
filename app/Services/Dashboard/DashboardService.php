@@ -94,6 +94,24 @@ class DashboardService
                         ->sortByDesc('points')->take(5)->values(),
                 ]);
             case 'teacher':
+                $myGrades = Course::where('teacher_id', $user->id)->distinct()->pluck('grade');
+                $classStudents = Admin::where('type', 'student')->whereIn('grade', $myGrades)->limit(30)->get(['id', 'name', 'grade']);
+                $atRisk = [];
+                $subjectAvgs = [];
+                foreach ($classStudents as $s) {
+                    try {
+                        $prof = $this->insights->profile($s->id);
+                    } catch (\Throwable) {
+                        continue;
+                    }
+                    if ($prof['risk'] === 'high') {
+                        $atRisk[] = ['student' => $s, 'reasons' => $prof['reasons'], 'avg' => $prof['avg']];
+                    }
+                    foreach ($prof['mastery'] as $m) {
+                        $subjectAvgs[$m['subject']][] = $m['avg'];
+                    }
+                }
+                $weakSubjects = collect($subjectAvgs)->map(fn ($v, $k) => ['subject' => $k, 'avg' => round(array_sum($v) / count($v), 1)])->sortBy('avg')->take(5)->values();
                 return view('dashboard.teacher.teacher', [
                     'stats' => [
                         'courses' => Course::where('teacher_id', $user->id)->count(),
@@ -104,6 +122,8 @@ class DashboardService
                     'recentCourses' => Course::where('teacher_id', $user->id)->latest()->limit(5)->get(),
                     'recentAssignments' => Assignment::where('teacher_id', $user->id)->latest()->limit(5)->get(),
                     'recentVideos' => Video::where('teacher_id', $user->id)->latest()->limit(5)->get(),
+                    'atRisk' => array_slice($atRisk, 0, 8),
+                    'weakSubjects' => $weakSubjects,
                 ]);
             case 'student':
                 $grade = $user->grade;

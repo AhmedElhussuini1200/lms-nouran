@@ -35,6 +35,7 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     Route::post('courses/{course}/attendance', [AttendanceController::class, 'store'])->middleware('owns')->name('attendance.store');
     Route::get('attendance/scan/{token}', [AttendanceController::class, 'scan'])->name('attendance.scan');
     Route::get('courses-events', [CourseController::class, 'events'])->name('courses.events');
+    Route::get('courses-calendar', [CourseController::class, 'calendar'])->name('courses.calendar');
     Route::resource('courses', CourseController::class)->middleware('owns');
     Route::resource('assignments', AssignmentController::class)->middleware('owns');
     Route::resource('exams', ExamController::class)->middleware('owns');

@@ -9,10 +9,28 @@ use Illuminate\Http\Request;
 
 class OnlinePaymentController extends Controller
 {
+    // الطالب فاتورته بس — ولي الأمر فواتير أبنائه — الإدارة الكل
+    protected function authorizePayment(Payment $payment): void
+    {
+        $me = auth('admin')->user();
+        if (in_array($me->type, ['admin', 'teacher'])) {
+            return;
+        }
+        if ($me->type === 'student') {
+            abort_if($payment->student_id !== $me->id, 403);
+            return;
+        }
+        if ($me->type === 'parent') {
+            abort_unless($me->students()->where('admins.id', $payment->student_id)->exists(), 403);
+            return;
+        }
+        abort(403);
+    }
     // بدء دفع أونلاين (حقيقي عند وجود المفاتيح — وإلا mock)
     public function checkout(Request $request, Payment $payment, \App\Services\OnlinePayService $pay)
     {
         $request->validate(['provider' => ['required', 'in:paymob,fawry']]);
+        $this->authorizePayment($payment);
         $provider = $request->provider;
 
         $realUrl = $provider === 'paymob' ? $pay->paymobIntention($payment) : null;
@@ -129,6 +147,7 @@ class OnlinePaymentController extends Controller
     // إيصال PDF
     public function receipt(Payment $payment)
     {
+        $this->authorizePayment($payment);
         $payment->loadMissing(['student']);
         $html = view('dashboard.payments.receipt-pdf', compact('payment'))->render();
         $mpdf = new \Mpdf\Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'default_font' => 'dejavusans']);

@@ -42,13 +42,14 @@ class PaymentCheckoutService
         ];
     }
 
-    public function sendOtp(Payment $payment, float $amount, $user): void
+    public function sendOtp(Payment $payment, float $amount, $user, ?string $receiptPath = null): void
     {
         // ثابت للتجربة حالياً — يتبدل بكود عشوائي في الإنتاج
         $code = '123456';
         Cache::put($this->otpKey($payment, $user), [
             'hash' => hash('sha256', $code),
             'amount' => $amount,
+            'receipt' => $receiptPath,
             'tries' => 0,
         ], now()->addMinutes(5));
 
@@ -81,16 +82,20 @@ class PaymentCheckoutService
         }
         Cache::forget($key);
 
-        return ['ok' => true, 'amount' => $data['amount']];
+        return ['ok' => true, 'amount' => $data['amount'], 'receipt' => $data['receipt'] ?? null];
     }
 
-    public function applyPayment(Payment $payment, float $amount, $user): Payment
+    public function applyPayment(Payment $payment, float $amount, $user, ?string $receipt = null): Payment
     {
         $payment->update([
             'paid_amount' => $payment->paid_amount + $amount,
             'paid_at' => now(),
             'paid_by' => $user->id,
             'payer_name' => $user->name,
+            'receipt_image' => $receipt ?? $payment->receipt_image,
+            'unverified_amount' => $amount,
+            'receipt_verified' => false,
+            'verified_by' => null,
         ]);
 
         \App\Http\Controllers\Dashboard\GrowthController::teacherCommission($payment->fresh());
@@ -112,5 +117,31 @@ class PaymentCheckoutService
     protected function otpKey(Payment $payment, $user): string
     {
         return "pay_otp:{$payment->id}:{$user->id}";
+    }
+
+    // اعتماد الإيصال من المدرس/الإدارة
+    public function approve(Payment $payment, $user): Payment
+    {
+        $payment->update(['receipt_verified' => true, 'verified_by' => $user->id, 'unverified_amount' => 0]);
+        $payment->loadMissing('student');
+        notifyAdmin($payment->student_id, __('تم اعتماد دفعتك'), $payment->month . ' - ' . $payment->paid_amount . ' ج', 'success', route('admin.payments.index'));
+
+        return $payment;
+    }
+
+    // رفض الإيصال: يخصم المبلغ المعلق فقط ويمسح الإيصال
+    public function reject(Payment $payment): Payment
+    {
+        $payment->update([
+            'paid_amount' => max(0, (float) $payment->paid_amount - (float) $payment->unverified_amount),
+            'receipt_image' => null,
+            'unverified_amount' => 0,
+            'receipt_verified' => false,
+            'verified_by' => null,
+        ]);
+        $payment->loadMissing('student');
+        notifyAdmin($payment->student_id, __('تم رفض إيصال الدفع'), $payment->month . ' - ' . __('أعد رفع إيصال صحيح'), 'warning', route('admin.payments.index'));
+
+        return $payment;
     }
 }

@@ -705,5 +705,18 @@
   "بيانات ولي الأمر (اختياري — لو نسيت ضيفه بعدين مع اختيار الطالب)": "Parent info (optional - if skipped add later with student selection)",
   "اسم ولي الأمر": "Parent name",
   "بريد ولي الأمر": "Parent email",
-  "هاتف ولي الأمر": "Parent phone"
+  "هاتف ولي الأمر": "Parent phone",
+  "صورة إيصال التحويل (إجباري)": "Transfer receipt image (required)",
+  "الإيصال": "Receipt",
+  "معتمد": "Verified",
+  "بانتظار المراجعة": "Pending review",
+  "اعتماد": "Approve",
+  "رفض": "Reject",
+  "تم اعتماد الدفعة": "Payment approved",
+  "تم اعتماد دفعتك": "Your payment was approved",
+  "تم رفض الإيصال وإرجاع المبلغ": "Receipt rejected and amount reversed",
+  "تم رفض إيصال الدفع": "Payment receipt rejected",
+  "أعد رفع إيصال صحيح": "Please upload a valid receipt",
+  "رفض الإيصال وإرجاع المبلغ؟": "Reject receipt and reverse amount?",
+  "تم تأكيد الدفع — بانتظار اعتماد المدرس": "Payment confirmed - awaiting teacher approval"
 }

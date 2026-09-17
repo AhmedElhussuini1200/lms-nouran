@@ -70,6 +70,7 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     Route::post('payments/{payment}/checkout', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'checkout'])->name('onlinepay.checkout');
     Route::post('payments/{payment}/confirm', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'confirm'])->name('onlinepay.confirm');
     Route::post('payments/{payment}/verify-otp', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'verifyOtp'])->name('onlinepay.verify');
+    Route::post('payments/{payment}/review', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'review'])->name('onlinepay.review');
     Route::get('payments/{payment}/receipt', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'receipt'])->name('onlinepay.receipt');
     Route::post('payments/callback/{provider}', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'callback'])->withoutMiddleware(['auth:admin'])->name('onlinepay.callback');
     // بنك الأسئلة والنمو

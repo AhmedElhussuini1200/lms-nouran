@@ -9,11 +9,12 @@ class Payment extends Model
     protected $fillable = [
         'student_id', 'paid_by', 'payer_name', 'month', 'amount', 'paid_amount',
         'status_id', 'method', 'notes', 'created_by',
+        'receipt_image', 'receipt_verified', 'verified_by', 'unverified_amount',
     ];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'paid_amount' => 'decimal:2'];
+        return ['amount' => 'decimal:2', 'paid_amount' => 'decimal:2', 'receipt_verified' => 'boolean'];
     }
 
     public function student()

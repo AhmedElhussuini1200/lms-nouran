@@ -28,9 +28,11 @@
 @endif
 <div class="border border-dashed rounded p-6 mx-auto" style="max-width:480px">
 <h5 class="fw-bold mb-4">{{ __('حوّلت؟ أكّد الدفع') }}</h5>
-<form method="POST" action="{{ route('admin.onlinepay.confirm', $payment->id) }}">@csrf
+<form method="POST" action="{{ route('admin.onlinepay.confirm', $payment->id) }}" enctype="multipart/form-data">@csrf
 <label class="form-label fw-semibold">{{ __('المبلغ اللي حولته') }}</label>
 <input type="number" name="paid_amount" class="form-control mb-4" value="{{ $payment->remaining }}" min="1" />
+<label class="form-label fw-semibold">{{ __('صورة إيصال التحويل (إجباري)') }}</label>
+<input type="file" name="receipt" class="form-control mb-4" accept="image/*" required />
 <button class="btn btn-success w-100"><i class="ki-outline ki-check fs-2"></i> {{ __('تأكيد الدفع') }}</button>
 <p class="text-muted fs-8 mt-3 mb-0">{{ __('هيتسجل إنك انت اللي دفعت، والمدرس هيتأكد ويعتمدها') }}</p>
 </form>

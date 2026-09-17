@@ -40,18 +40,22 @@ class OnlinePaymentController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    // تأكيد الدفع — خطوة 1: إرسال OTP واتساب لرقم الدافع
+    // تأكيد الدفع — خطوة 1: رفع الإيصال + إرسال OTP واتساب لرقم الدافع
     public function confirm(Request $request, Payment $payment)
     {
         Gate::forUser(auth('admin')->user())->authorize('pay', $payment);
-        $request->validate(['paid_amount' => ['required', 'numeric', 'min:1', 'max:' . max(1, (float) $payment->remaining)]]);
+        $request->validate([
+            'paid_amount' => ['required', 'numeric', 'min:1', 'max:' . max(1, (float) $payment->remaining)],
+            'receipt' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
+        ]);
         $me = auth('admin')->user();
 
         if (! $me->phone) {
             return back()->with('error_message', __('ضيف رقم موبايلك في البروفايل الأول عشان يوصلك كود التحقق'));
         }
 
-        $this->checkout->sendOtp($payment, (float) $request->paid_amount, $me);
+        $receiptPath = 'storage/' . $request->file('receipt')->store('pay_receipts', 'public');
+        $this->checkout->sendOtp($payment, (float) $request->paid_amount, $me, $receiptPath);
 
         return view('dashboard.payments.otp', compact('payment'));
     }
@@ -67,9 +71,24 @@ class OnlinePaymentController extends Controller
             return back()->with('error_message', $check['error']);
         }
 
-        $this->checkout->applyPayment($payment, $check['amount'], auth('admin')->user());
+        $this->checkout->applyPayment($payment, $check['amount'], auth('admin')->user(), $check['receipt'] ?? null);
 
-        return redirect()->route('admin.onlinepay.receipt', $payment->id)->with('success', __('تم تأكيد الدفع'));
+        return redirect()->route('admin.onlinepay.receipt', $payment->id)->with('success', __('تم تأكيد الدفع — بانتظار اعتماد المدرس'));
+    }
+
+    // اعتماد/رفض الإيصال (مدرس/إدارة)
+    public function review(Request $request, Payment $payment)
+    {
+        abort_unless(in_array(auth('admin')->user()->type, ['admin', 'teacher']), 403);
+        $request->validate(['decision' => ['required', 'in:approve,reject']]);
+        if ($request->decision === 'approve') {
+            $this->checkout->approve($payment, auth('admin')->user());
+
+            return back()->with('success', __('تم اعتماد الدفعة'));
+        }
+        $this->checkout->reject($payment);
+
+        return back()->with('success', __('تم رفض الإيصال وإرجاع المبلغ'));
     }
 
     // إيصال PDF

@@ -114,6 +114,11 @@ class PaymentService
         } elseif (! empty($data['payer_name']) && empty($payment->paid_by)) {
             $data['paid_by'] = $me->id;
         }
+        // تحصيل الإدارة/المدرس نقداً = موثّق تلقائياً
+        if (in_array($me->type, ['admin', 'teacher'])) {
+            $data['receipt_verified'] = true;
+            $data['unverified_amount'] = 0;
+        }
 
         $this->paymentRepository->update($data, $payment);
         $this->notifyPayment($payment->fresh(), __('تحديث مدفوعات'));

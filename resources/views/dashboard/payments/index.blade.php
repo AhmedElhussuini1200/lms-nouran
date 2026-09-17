@@ -17,17 +17,21 @@
 </div></div></div>
 
 <div class="card"><div class="card-body p-0"><div class="table-responsive"><table class="table table-row-bordered align-middle gy-4 mb-0">
-<thead><tr class="fw-bold text-muted"><th>{{ __('الطالب') }}</th><th>{{ __('الشهر') }}</th><th>{{ __('المطلوب') }}</th><th>{{ __('المدفوع') }}</th><th>{{ __('المتبقي') }}</th><th>{{ __('الحالة') }}</th><th>{{ __('الدافع') }}</th><th>{{ __('الطريقة') }}</th><th></th></tr></thead>
+<thead><tr class="fw-bold text-muted"><th>{{ __('الطالب') }}</th><th>{{ __('الشهر') }}</th><th>{{ __('المطلوب') }}</th><th>{{ __('المدفوع') }}</th><th>{{ __('المتبقي') }}</th><th>{{ __('الحالة') }}</th><th>{{ __('الدافع') }}</th><th>{{ __('الإيصال') }}</th><th>{{ __('الطريقة') }}</th><th></th></tr></thead>
 <tbody>@forelse($payments as $p)<tr>
 <td class="fw-bold">{{ $p->student->name ?? '' }}<div class="text-muted fw-normal fs-8">{{ __($p->student->grade ?? '') }}</div></td>
 <td>{{ $p->month }}</td><td>{{ $p->amount }}</td><td class="text-success">{{ $p->paid_amount }}</td>
 <td class="text-danger">{{ $p->remaining }}</td>
 <td>@if($p->status)<span class="badge badge-light-{{ $p->status->color }}">{{ $p->status->name_ar }}</span>@else — @endif</td>
 <td class="fs-8">{{ $p->payer_label }}</td>
+<td class="fs-8">@if($p->receipt_image)<a href="{{ asset($p->receipt_image) }}" target="_blank" class="badge badge-light-info">{{ __('إيصال') }}</a> @if($p->receipt_verified)<span class="badge badge-light-success">{{ __('معتمد') }}</span>@else<span class="badge badge-light-warning">{{ __('بانتظار المراجعة') }}</span>@endif @else — @endif</td>
 <td class="text-muted fs-8">{{ $p->method ?? '—' }}</td>
-<td class="text-end"><span class="d-inline-flex gap-2">@if(in_array(auth('admin')->user()->type,['admin','teacher']))<a href="{{ route('admin.payments.edit',$p->id) }}" class="btn btn-sm btn-light-primary">{{ __('تحصيل') }}</a>@endif
-@if(in_array(auth('admin')->user()->type,['parent','student']) && $p->remaining > 0)<form method="POST" action="{{ route('admin.onlinepay.checkout',$p->id) }}">@csrf<input type="hidden" name="provider" value="paymob" /><button class="btn btn-sm btn-success">💳 {{ __('ادفع أونلاين') }}</button></form>@endif</span></td>
-</tr>@empty<tr><td colspan="9" class="text-center text-muted py-10">{{ __('لا توجد فواتير') }}</td></tr>@endforelse</tbody>
+<td class="text-end"><span class="d-inline-flex gap-2">@if(in_array(auth('admin')->user()->type,['admin','teacher']))<a href="{{ route('admin.payments.edit',$p->id) }}" class="btn btn-sm btn-light-primary">{{ __('تحصيل') }}</a>
+@if($p->receipt_image && !$p->receipt_verified)<form method="POST" action="{{ route('admin.onlinepay.review',$p->id) }}">@csrf<input type="hidden" name="decision" value="approve" /><button class="btn btn-sm btn-success">{{ __('اعتماد') }}</button></form>
+<form method="POST" action="{{ route('admin.onlinepay.review',$p->id) }}" onsubmit="return confirm('{{ __('رفض الإيصال وإرجاع المبلغ؟') }}')">@csrf<input type="hidden" name="decision" value="reject" /><button class="btn btn-sm btn-light-danger">{{ __('رفض') }}</button></form>@endif
+@endif
+@if(in_array(auth('admin')->user()->type,['parent','student']) && $p->remaining > 0)<form method="POST" action="{{ route('admin.onlinepay.checkout',$p->id) }}">@csrf<input type="hidden" name="provider" value="paymob" /><button class="btn btn-sm btn-success"><i class="ki-outline ki-wallet fs-4"></i> {{ __('ادفع أونلاين') }}</button></form>@endif</span></td>
+</tr>@empty<tr><td colspan="10" class="text-center text-muted py-10">{{ __('لا توجد فواتير') }}</td></tr>@endforelse</tbody>
 </table></div></div></div>
 <div class="mt-7 d-flex justify-content-center">{{ $payments->appends(request()->query())->links() }}</div>
 @endsection

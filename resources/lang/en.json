@@ -718,5 +718,6 @@
   "تم رفض إيصال الدفع": "Payment receipt rejected",
   "أعد رفع إيصال صحيح": "Please upload a valid receipt",
   "رفض الإيصال وإرجاع المبلغ؟": "Reject receipt and reverse amount?",
-  "تم تأكيد الدفع — بانتظار اعتماد المدرس": "Payment confirmed - awaiting teacher approval"
+  "تم تأكيد الدفع — بانتظار اعتماد المدرس": "Payment confirmed - awaiting teacher approval",
+  "تم إرسال كود جديد": "New code sent"
 }

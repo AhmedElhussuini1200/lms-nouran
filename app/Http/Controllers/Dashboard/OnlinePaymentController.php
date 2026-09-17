@@ -44,11 +44,20 @@ class OnlinePaymentController extends Controller
     public function confirm(Request $request, Payment $payment)
     {
         Gate::forUser(auth('admin')->user())->authorize('pay', $payment);
+        $me = auth('admin')->user();
+
+        // إعادة إرسال: لو في طلب معلق (مبلغ + إيصال محفوظين) مش لازم رفع من جديد
+        $pending = \Illuminate\Support\Facades\Cache::get("pay_otp:{$payment->id}:{$me->id}");
+        if (! $request->hasFile('receipt') && $pending) {
+            $this->checkout->sendOtp($payment, $pending['amount'], $me, $pending['receipt'] ?? null);
+
+            return view('dashboard.payments.otp', compact('payment'))->with('success', __('تم إرسال كود جديد'));
+        }
+
         $request->validate([
             'paid_amount' => ['required', 'numeric', 'min:1', 'max:' . max(1, (float) $payment->remaining)],
             'receipt' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
         ]);
-        $me = auth('admin')->user();
 
         if (! $me->phone) {
             return back()->with('error_message', __('ضيف رقم موبايلك في البروفايل الأول عشان يوصلك كود التحقق'));

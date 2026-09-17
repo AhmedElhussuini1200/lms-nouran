@@ -23,6 +23,12 @@ class StoreExamRequest extends FormRequest
             'exam_date' => ['nullable', 'date'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
             'total_marks' => ['nullable', 'numeric', 'min:0'],
+            'shuffle_questions' => ['nullable', 'boolean'],
+            'max_attempts' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'passing_marks' => ['nullable', 'numeric', 'min:0'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'anti_cheat' => ['nullable', 'boolean'],
         ];
     }
 }

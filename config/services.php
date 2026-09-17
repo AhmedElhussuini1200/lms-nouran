@@ -35,6 +35,15 @@ return [
         ],
     ],
 
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
+    'onlinepay' => [
+        'paymob_key' => env('PAYMOB_API_KEY'),
+        'fawry_key' => env('FAWRY_API_KEY'),
+    ],
+
     'whatsapp' => [
         'enabled' => env('WHATSAPP_ENABLED', false),
         'provider' => env('WHATSAPP_PROVIDER', 'meta'), // meta | callmebot | gateway | evolution

@@ -67,7 +67,18 @@ class ExamService
         $user = auth('admin')->user();
         $myResult = $user->type === 'student' ? $this->examRepository->myResult($exam, $user->id) : null;
 
-        return view('dashboard.exams.show', compact('exam', 'myResult'));
+        // خلط الأسئلة لو مفعّل (للطالب فقط)
+        $questions = $exam->questions;
+        if ($exam->shuffle_questions && $user->type === 'student') {
+            $seed = (int) ($user->id . date('Ymd'));
+            srand($seed);
+            $questions = $questions->shuffle();
+        }
+
+        $attemptsUsed = $user->type === 'student' ? $exam->attemptsUsed($user->id) : 0;
+        $canAttempt = $user->type !== 'student' || $exam->canAttempt($user->id);
+
+        return view('dashboard.exams.show', compact('exam', 'myResult', 'questions', 'attemptsUsed', 'canAttempt'));
     }
 
     public function edit(Exam $exam)
@@ -106,6 +117,31 @@ class ExamService
     {
         abort_unless(auth('admin')->user()->type === 'student', 403);
         $this->authorizeView($exam);
+
+        // 1) نافذة الوقت
+        if (! $exam->isOpen()) {
+            return redirect()->back()->with('error_message', __('الامتحان خارج الوقت المسموح'));
+        }
+
+        // 2) عدد المحاولات
+        $studentId = auth('admin')->id();
+        if (! $exam->canAttempt($studentId)) {
+            return redirect()->back()->with('error_message', __('استنفدت عدد المحاولات المتاحة'));
+        }
+
+        // 3) زمن المؤقت: لازم يكون بدأ محاولة ولم يتجاوز المدة
+        $attempt = \App\Models\ExamAttempt::where('exam_id', $exam->id)
+            ->where('student_id', $studentId)
+            ->whereNull('submitted_at')
+            ->latest()->first();
+        if ($exam->duration_minutes && $attempt?->started_at) {
+            $deadline = $attempt->started_at->copy()->addMinutes($exam->duration_minutes + 2); // سماح دقيقتين
+            if (now()->gt($deadline)) {
+                $attempt->update(['submitted_at' => now()]);
+                return redirect()->back()->with('error_message', __('انتهى وقت الامتحان'));
+            }
+        }
+
         $request->validate(['answers' => ['nullable', 'array']]);
         $exam->loadMissing('questions');
 
@@ -134,6 +170,46 @@ class ExamService
 
         $this->examRepository->submit($exam, $data);
 
+        // قفل المحاولة الحالية
+        $attempt?->update([
+            'submitted_at' => now(),
+            'tab_switches' => (int) $request->input('tab_switches', $attempt->tab_switches ?? 0),
+        ]);
+        // لو مفيش محاولة مفتوحة (امتحان قديم قبل الميزة) سجّل واحدة مقفولة
+        if (! $attempt) {
+            \App\Models\ExamAttempt::create([
+                'exam_id' => $exam->id,
+                'student_id' => $studentId,
+                'attempt_no' => $exam->attempts()->where('student_id', $studentId)->count() + 1,
+                'started_at' => now(),
+                'submitted_at' => now(),
+                'tab_switches' => (int) $request->input('tab_switches', 0),
+            ]);
+        }
+
+        // نقاط تحفيزية: 10 نقاط لكل امتحان مُسلّم + 1 لكل درجة
+        $points = 10 + (int) $autoMarks;
+        \App\Models\StudentPoint::create([
+            'student_id' => $studentId,
+            'points' => $points,
+            'reason' => 'exam_submit',
+            'source_type' => \App\Models\Exam::class,
+            'source_id' => $exam->id,
+        ]);
+
+        // شهادة تلقائية عند تجاوز درجة النجاح
+        if (! $hasEssay && $exam->passing_marks !== null && $autoMarks >= (float) $exam->passing_marks) {
+            $exists = \App\Models\Certificate::where('exam_id', $exam->id)->where('student_id', $studentId)->exists();
+            if (! $exists) {
+                \App\Models\Certificate::create([
+                    'student_id' => $studentId,
+                    'exam_id' => $exam->id,
+                    'code' => 'CERT-' . strtoupper(uniqid()),
+                    'score' => $autoMarks,
+                ]);
+            }
+        }
+
         $student = auth('admin')->user();
         notifyAdmin($exam->teacher_id, __('تسليم امتحان جديد'), $student->name . ' - ' . $exam->title, 'warning', route('admin.exams.show', $exam->id));
 
@@ -142,6 +218,33 @@ class ExamService
         }
 
         return redirect()->route('admin.exams.show', $exam->id)->with('success', __('تم تسليم الامتحان بنجاح'));
+    }
+
+    public function startAttempt(Request $request, Exam $exam)
+    {
+        abort_unless(auth('admin')->user()->type === 'student', 403);
+        $this->authorizeView($exam);
+        $studentId = auth('admin')->id();
+
+        if (! $exam->canAttempt($studentId)) {
+            return response()->json(['message' => __('غير متاح: خارج الوقت أو استنفدت المحاولات')], 422);
+        }
+
+        $open = \App\Models\ExamAttempt::where('exam_id', $exam->id)
+            ->where('student_id', $studentId)->whereNull('submitted_at')->latest()->first();
+        if ($open) {
+            return response()->json(['started_at' => $open->started_at, 'attempt_no' => $open->attempt_no]);
+        }
+
+        $maxNo = $exam->attempts()->where('student_id', $studentId)->max('attempt_no') ?: 0;
+        $attempt = \App\Models\ExamAttempt::create([
+            'exam_id' => $exam->id,
+            'student_id' => $studentId,
+            'attempt_no' => $maxNo + 1,
+            'started_at' => now(),
+        ]);
+
+        return response()->json(['started_at' => $attempt->started_at, 'attempt_no' => $attempt->attempt_no]);
     }
 
     public function addQuestion(StoreQuestionRequest $request, Exam $exam)

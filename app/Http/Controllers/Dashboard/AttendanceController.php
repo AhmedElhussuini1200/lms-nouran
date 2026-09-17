@@ -25,4 +25,9 @@ class AttendanceController extends Controller
     {
         return $this->service->store($course, $request);
     }
+
+    public function scan(Request $request, string $token)
+    {
+        return $this->service->scan($request, $token);
+    }
 }

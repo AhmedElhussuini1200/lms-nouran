@@ -80,16 +80,25 @@
 @if(auth('admin')->user()->type==='student')
 <div class="card"><div class="card-header"><h3 class="card-title">{{ __('حل الامتحان') }}</h3>
 <div class="d-flex gap-2 align-items-center">
+<span class="badge badge-light-primary">{{ __('المحاولة') }} {{ ($attemptsUsed ?? 0) + 1 }} / {{ $exam->max_attempts ?? 1 }}</span>
 @if($exam->duration_minutes)<span class="badge badge-light-warning fs-6" id="exam-timer" data-minutes="{{ $exam->duration_minutes }}">--:--</span>@endif
 @if($myResult)<span class="badge badge-light-{{ $myResult->status?->color ?? 'success' }}">{{ $myResult->status->name_ar ?? '' }}</span>@endif
 </div></div>
-@if($exam->questions->isEmpty())
+@php $qlist = $questions ?? $exam->questions; @endphp
+@if($qlist->isEmpty())
 <div class="card-body"><p class="text-muted">{{ __('لا توجد أسئلة بعد') }}</p></div>
+@elseif(!($canAttempt ?? true))
+<div class="card-body"><div class="alert alert-warning">{{ __('استنفدت عدد المحاولات أو الامتحان خارج الوقت المسموح') }}</div></div>
 @else
-<form action="{{ route('admin.exams.submit',$exam->id) }}" method="POST" class="ajax-form" data-success-callback="onAjaxSuccess">@csrf
+<form id="exam-form" action="{{ route('admin.exams.submit',$exam->id) }}" method="POST" class="ajax-form" data-success-callback="onAjaxSuccess">@csrf
+<input type="hidden" name="tab_switches" id="tab_switches" value="0" />
 <div class="card-body">
+<div class="alert alert-light d-flex justify-content-between align-items-center">
+<span>{{ __('اضغط بدء لحساب المؤقت') }}</span>
+<button type="button" id="btn-start" class="btn btn-sm btn-warning">{{ __('بدء الامتحان') }}</button>
+</div>
 @if($myResult)<div class="alert alert-{{ $myResult->status?->color ?? 'success' }}">{{ __('تم التسليم') }} @if(!is_null($myResult->marks_obtained)) • {{ __('درجتك') }}: <b>{{ $myResult->marks_obtained }}</b> @endif</div>@endif
-@foreach($exam->questions as $i => $q)
+@foreach($qlist as $i => $q)
 <div class="border rounded p-4 mb-4">
 <p class="fw-bold">{{ __('سؤال') }} {{ $i+1 }}: {{ $q->question }} <span class="badge badge-light-success ms-2">{{ $q->marks }}</span></p>
 @if($q->type === 'mcq' && $q->options)
@@ -152,6 +161,38 @@ document.addEventListener('DOMContentLoaded', function() {
             form.appendChild(h);
         });
     });
+
+    // مؤقت الامتحان + بدء المحاولة + كشف تبديل التبويب
+    const btnStart = document.getElementById('btn-start');
+    const timerEl = document.getElementById('exam-timer');
+    const examForm = document.getElementById('exam-form');
+    const tabInput = document.getElementById('tab_switches');
+    let tabSwitches = 0, deadline = null, timerInt = null;
+    const antiCheat = @json((bool) $exam->anti_cheat);
+    if (btnStart) btnStart.addEventListener('click', async () => {
+        const r = await fetch("{{ route('admin.exams.start', $exam->id) }}", {method:'POST', headers:{'X-CSRF-TOKEN':"{{ csrf_token() }}",'Accept':'application/json'}});
+        const j = await r.json();
+        if (!r.ok) { alert(j.message || 'غير متاح'); return; }
+        const mins = parseInt(timerEl?.dataset.minutes || '0');
+        deadline = Date.now() + mins * 60000;
+        btnStart.disabled = true; btnStart.textContent = "{{ __('الامتحان بدأ') }}";
+        timerInt = setInterval(() => {
+            const left = Math.max(0, deadline - Date.now());
+            const m = Math.floor(left/60000), s = Math.floor(left%60000/1000);
+            if (timerEl) timerEl.textContent = m + ':' + String(s).padStart(2,'0');
+            if (left <= 0) { clearInterval(timerInt); alert("{{ __('انتهى الوقت — سيتم التسليم') }}"); examForm.submit(); }
+        }, 1000);
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && deadline) {
+            tabSwitches++; if (tabInput) tabInput.value = tabSwitches;
+            if (antiCheat && tabSwitches >= 3) alert("{{ __('تحذير: تم رصد تبديل التبويب 3 مرات') }}");
+        }
+    });
+    if (antiCheat) {
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('contextmenu', e => { if (examForm) e.preventDefault(); });
+    }
 });
 </script>
 @endpush

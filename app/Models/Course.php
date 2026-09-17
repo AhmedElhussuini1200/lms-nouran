@@ -14,12 +14,18 @@ class Course extends Model
         'subject',
         'scheduled_at',
         'price',
+        'qr_token',
+        'is_live',
+        'live_url',
+        'live_started_at',
     ];
 
     protected function casts(): array
     {
         return [
             'scheduled_at' => 'datetime',
+            'live_started_at' => 'datetime',
+            'is_live' => 'boolean',
             'price' => 'decimal:2',
         ];
     }
@@ -27,5 +33,15 @@ class Course extends Model
     public function teacher()
     {
         return $this->belongsTo(Admin::class, 'teacher_id');
+    }
+
+    public function liveMessages()
+    {
+        return $this->hasMany(LiveMessage::class, 'course_id')->latest()->limit(50);
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
     }
 }

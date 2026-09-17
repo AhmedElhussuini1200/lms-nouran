@@ -68,6 +68,11 @@ class ExamController extends Controller
         return $this->service->submit($request, $exam);
     }
 
+    public function startAttempt(Request $request, Exam $exam)
+    {
+        return $this->service->startAttempt($request, $exam);
+    }
+
     public function grade(Request $request, ExamResult $result)
     {
         return $this->service->grade($request, $result);

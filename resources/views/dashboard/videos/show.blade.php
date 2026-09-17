@@ -28,8 +28,21 @@
                         @endif
                     </div>
                 </div>
+                @if(auth('admin')->user()->type === 'student')
+                <div class="p-7 pt-0">
+                    <div class="d-flex justify-content-between fs-8 mb-1"><span class="fw-bold">{{ __('تقدم المشاهدة') }}</span><span id="vp-label">{{ $myProgress->percent ?? 0 }}%</span></div>
+                    <div class="progress h-8px"><div id="vp-bar" class="progress-bar bg-success" style="width:{{ $myProgress->percent ?? 0 }}%"></div></div>
+                    @if($video->duration_seconds)<button id="vp-sim" class="btn btn-sm btn-light-success mt-3">{{ __('تسجيل 5 دقائق مشاهدة (تجريبي)') }}</button>@endif
+                </div>
+                @endif
             </div>
         </div>
+        {{-- التعليقات --}}
+        <div class="card card-flush mt-6"><div class="card-header"><h3 class="card-title">{{ __('التعليقات') }} (<span id="ccount">{{ $comments->count() }}</span>)</h3></div>
+        <div class="card-body">
+            <form id="cform" class="d-flex gap-2 mb-4"><input id="cbody" class="form-control" placeholder="{{ __('اكتب تعليقاً...') }}" maxlength="1000" required /><button class="btn btn-primary">{{ __('نشر') }}</button></form>
+            <div id="clist">@foreach($comments as $c)<div class="border rounded p-3 mb-2"><b>{{ $c->author->name ?? '' }}</b> <span class="text-muted fs-8">{{ $c->created_at->diffForHumans() }}</span><p class="mb-0 mt-1">{{ $c->body }}</p></div>@endforeach</div>
+        </div></div>
     </div>
     <div class="col-xl-4">
         @if(in_array(auth('admin')->user()->type, ['admin', 'teacher']))
@@ -68,4 +81,27 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // تقدم المشاهدة (تجريبي: زر + إرسال دوري)
+  const sim = document.getElementById('vp-sim');
+  let watched = {{ $myProgress->watched_seconds ?? 0 }};
+  const dur = {{ $video->duration_seconds ?: 3600 }};
+  async function push() {
+    const r = await fetch("{{ route('admin.videos.progress', $video->id) }}", {method:'POST', headers:{'X-CSRF-TOKEN':"{{ csrf_token() }}",'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify({watched_seconds: watched, duration: dur})});
+    if (r.ok) { const j = await r.json(); document.getElementById('vp-bar').style.width = j.percent+'%'; document.getElementById('vp-label').textContent = j.percent+'%'; }
+  }
+  if (sim) sim.onclick = () => { watched += 300; push(); };
+  // تعليقات
+  const cf = document.getElementById('cform');
+  if (cf) cf.onsubmit = async e => {
+    e.preventDefault();
+    const body = document.getElementById('cbody').value; document.getElementById('cbody').value = '';
+    const r = await fetch("{{ route('admin.comments.store', ['type'=>'video','id'=>$video->id]) }}", {method:'POST', headers:{'X-CSRF-TOKEN':"{{ csrf_token() }}",'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify({body})});
+    if (r.ok) { const j = await r.json(); const d = document.createElement('div'); d.className='border rounded p-3 mb-2'; d.innerHTML = '<b>'+(j.comment.author?.name||'')+'</b><p class="mb-0 mt-1"></p>'; d.querySelector('p').textContent = j.comment.body; document.getElementById('clist').prepend(d); }
+  };
+});
+</script>
+@endpush
 @endsection

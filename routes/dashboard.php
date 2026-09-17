@@ -33,6 +33,7 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     Route::resource('videos', VideoController::class)->middleware('owns');
     Route::get('courses/{course}/attendance', [AttendanceController::class, 'mark'])->middleware('owns')->name('attendance.mark');
     Route::post('courses/{course}/attendance', [AttendanceController::class, 'store'])->middleware('owns')->name('attendance.store');
+    Route::get('attendance/scan/{token}', [AttendanceController::class, 'scan'])->name('attendance.scan');
     Route::get('courses-events', [CourseController::class, 'events'])->name('courses.events');
     Route::resource('courses', CourseController::class)->middleware('owns');
     Route::resource('assignments', AssignmentController::class)->middleware('owns');
@@ -41,6 +42,42 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     Route::post('submissions/{submission}/grade', [AssignmentController::class, 'grade'])->middleware('owns')->name('submissions.grade');
     Route::post('submissions/{submission}/start-review', [AssignmentController::class, 'startReview'])->middleware('owns')->name('submissions.start-review');
     Route::post('exams/{exam}/submit', [ExamController::class, 'submit'])->middleware('owns')->name('exams.submit');
+    Route::post('exams/{exam}/start', [ExamController::class, 'startAttempt'])->middleware('owns')->name('exams.start');
+    // تفاعل: تقدم + تعليقات
+    Route::post('videos/{video}/progress', [\App\Http\Controllers\Dashboard\EngagementController::class, 'progress'])->name('videos.progress');
+    Route::get('{type}/{id}/comments', [\App\Http\Controllers\Dashboard\EngagementController::class, 'comments'])->where('type', 'video|course')->name('comments.index');
+    Route::post('{type}/{id}/comments', [\App\Http\Controllers\Dashboard\EngagementController::class, 'storeComment'])->where('type', 'video|course')->name('comments.store');
+    // إنجازات: شهادات + صدارة
+    Route::get('certificates', [\App\Http\Controllers\Dashboard\AchievementController::class, 'certificates'])->name('certificates.index');
+    Route::get('certificates/{certificate}/pdf', [\App\Http\Controllers\Dashboard\AchievementController::class, 'pdf'])->name('certificates.pdf');
+    Route::get('certificates/verify/{code}', [\App\Http\Controllers\Dashboard\AchievementController::class, 'verify'])->name('certificates.verify');
+    Route::get('leaderboard', [\App\Http\Controllers\Dashboard\AchievementController::class, 'leaderboard'])->name('leaderboard');
+    // مركز التقارير
+    Route::get('reports', [\App\Http\Controllers\Dashboard\ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/grades.xlsx', [\App\Http\Controllers\Dashboard\ReportController::class, 'gradesExcel'])->name('reports.grades');
+    Route::get('reports/attendance.xlsx', [\App\Http\Controllers\Dashboard\ReportController::class, 'attendanceExcel'])->name('reports.attendance');
+    Route::get('reports/payments.xlsx', [\App\Http\Controllers\Dashboard\ReportController::class, 'paymentsExcel'])->name('reports.payments');
+    Route::get('reports/engagement.pdf', [\App\Http\Controllers\Dashboard\ReportController::class, 'engagementPdf'])->name('reports.engagement');
+    // دفع أونلاين
+    Route::post('payments/{payment}/checkout', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'checkout'])->name('onlinepay.checkout');
+    Route::post('payments/{payment}/confirm', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'confirm'])->name('onlinepay.confirm');
+    Route::get('payments/{payment}/receipt', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'receipt'])->name('onlinepay.receipt');
+    // AI مساعد
+    Route::get('ai', [\App\Http\Controllers\Dashboard\AiController::class, 'index'])->name('ai.index');
+    Route::post('ai/ask', [\App\Http\Controllers\Dashboard\AiController::class, 'ask'])->name('ai.ask');
+    Route::post('ai/quiz', [\App\Http\Controllers\Dashboard\AiController::class, 'quiz'])->name('ai.quiz');
+    // لايف
+    Route::post('courses/{course}/live/start', [\App\Http\Controllers\Dashboard\LiveController::class, 'start'])->middleware('owns')->name('live.start');
+    Route::get('live/{course}', [\App\Http\Controllers\Dashboard\LiveController::class, 'room'])->name('live.room');
+    Route::post('live/{course}/stop', [\App\Http\Controllers\Dashboard\LiveController::class, 'stop'])->name('live.stop');
+    Route::post('live/{course}/message', [\App\Http\Controllers\Dashboard\LiveController::class, 'message'])->name('live.message');
+    Route::get('live/{course}/feed', [\App\Http\Controllers\Dashboard\LiveController::class, 'feed'])->name('live.feed');
+    // تحليلات
+    Route::get('analytics/at-risk', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'atRisk'])->name('analytics.risk');
+    Route::post('analytics/alert-parents', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'alertParents'])->name('analytics.alert');
+    Route::get('analytics/parent/{student}', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'parentReport'])->name('analytics.parent');
+    // واتساب بوت (webhook بدون auth admins — يتحقق بالمفتاح داخلياً)
+    Route::post('whatsapp/inbound', [\App\Http\Controllers\Dashboard\WhatsappBotController::class, 'inbound'])->withoutMiddleware(['auth:admin'])->name('whatsapp.inbound');
     Route::post('exams/{exam}/questions', [ExamController::class, 'addQuestion'])->middleware('owns')->name('exams.questions.store');
     Route::delete('questions/{question}', [ExamController::class, 'deleteQuestion'])->middleware('owns')->name('questions.destroy');
     Route::post('results/{result}/grade', [ExamController::class, 'grade'])->middleware('owns')->name('results.grade');

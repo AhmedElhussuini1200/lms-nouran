@@ -31,10 +31,33 @@ class AttendanceService
     public function mark(Course $course, Request $request)
     {
         $this->authorizeManage($course);
+        // توليد رمز QR مرة واحدة
+        if (! $course->qr_token) {
+            $course->update(['qr_token' => \Str::random(32)]);
+            $course->refresh();
+        }
         $date = $request->get('date', date('Y-m-d'));
         [$students, $marked] = $this->attendanceRepository->studentsForCourse($course, $date);
 
         return view('dashboard.attendance.mark', compact('course', 'students', 'marked', 'date'));
+    }
+
+    // الطالب يسجّل حضوره بنفسه عبر QR
+    public function scan(Request $request, string $token)
+    {
+        $course = Course::where('qr_token', $token)->firstOrFail();
+        $user = auth('admin')->user();
+        abort_unless($user->type === 'student' && $user->grade === $course->grade, 403);
+
+        Attendance::updateOrCreate(
+            ['course_id' => $course->id, 'student_id' => $user->id, 'date' => today()->format('Y-m-d')],
+            ['status' => Attendance::PRESENT, 'marked_by' => $user->id]
+        );
+
+        // نقطة التزام
+        \App\Models\StudentPoint::create(['student_id' => $user->id, 'points' => 3, 'reason' => 'attendance']);
+
+        return redirect()->route('admin.courses.show', $course->id)->with('success', __('تم تسجيل حضورك بنجاح'));
     }
 
     public function store(Course $course, Request $request)

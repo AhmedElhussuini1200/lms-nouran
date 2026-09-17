@@ -94,7 +94,12 @@ class VideoService
             ->limit(6)
             ->get();
 
-        return view('dashboard.videos.show', compact('video', 'related'));
+        $myProgress = auth('admin')->user()?->type === 'student'
+            ? \App\Models\VideoProgress::where('video_id', $video->id)->where('student_id', auth('admin')->id())->first()
+            : null;
+        $comments = $video->comments()->with('author:id,name')->latest()->limit(30)->get();
+
+        return view('dashboard.videos.show', compact('video', 'related', 'myProgress', 'comments'));
     }
 
     public function edit(Video $video)

@@ -22,4 +22,14 @@ class Video extends Model
     {
         return $this->belongsTo(Admin::class, 'teacher_id');
     }
+
+    public function progresses()
+    {
+        return $this->hasMany(VideoProgress::class);
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
 }

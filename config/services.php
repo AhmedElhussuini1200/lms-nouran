@@ -41,7 +41,10 @@ return [
 
     'onlinepay' => [
         'paymob_key' => env('PAYMOB_API_KEY'),
+        'paymob_public' => env('PAYMOB_PUBLIC_KEY'),
+        'paymob_hmac' => env('PAYMOB_HMAC'),
         'fawry_key' => env('FAWRY_API_KEY'),
+        'fawry_merchant' => env('FAWRY_MERCHANT'),
     ],
 
     'whatsapp' => [

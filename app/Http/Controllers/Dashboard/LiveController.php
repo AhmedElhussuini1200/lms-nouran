@@ -40,8 +40,10 @@ class LiveController extends Controller
     {
         $request->validate(['message' => ['required', 'string', 'max:500']]);
         $msg = LiveMessage::create(['course_id' => $course->id, 'admin_id' => auth('admin')->id(), 'message' => strip_tags($request->message)]);
+        $msg->load('author:id,name');
+        broadcast(new \App\Events\LiveMessageSent($msg))->toOthers();
 
-        return response()->json(['message' => $msg->load('author:id,name')]);
+        return response()->json(['message' => $msg]);
     }
 
     // تحديث الشات

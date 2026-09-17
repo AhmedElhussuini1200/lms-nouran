@@ -9,3 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 // Schedule::command('auction:broadcast-floating')->everyMinute();
+
+// تذكيرات يومية 7 صباحاً: حصص اليوم + أقساط متأخرة
+Schedule::command('lms:remind')->dailyAt('07:00');

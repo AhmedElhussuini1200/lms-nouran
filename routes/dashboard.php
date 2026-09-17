@@ -62,6 +62,14 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     Route::post('payments/{payment}/checkout', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'checkout'])->name('onlinepay.checkout');
     Route::post('payments/{payment}/confirm', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'confirm'])->name('onlinepay.confirm');
     Route::get('payments/{payment}/receipt', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'receipt'])->name('onlinepay.receipt');
+    Route::post('payments/callback/{provider}', [\App\Http\Controllers\Dashboard\OnlinePaymentController::class, 'callback'])->withoutMiddleware(['auth:admin'])->name('onlinepay.callback');
+    // بنك الأسئلة والنمو
+    Route::get('bank', [\App\Http\Controllers\Dashboard\QuestionBankController::class, 'index'])->name('bank.index');
+    Route::post('bank', [\App\Http\Controllers\Dashboard\QuestionBankController::class, 'store'])->name('bank.store');
+    Route::post('exams/{exam}/assemble', [\App\Http\Controllers\Dashboard\QuestionBankController::class, 'assemble'])->middleware('owns')->name('exams.assemble');
+    Route::post('payments/{payment}/coupon', [\App\Http\Controllers\Dashboard\GrowthController::class, 'applyCoupon'])->name('payments.coupon');
+    Route::post('refer', [\App\Http\Controllers\Dashboard\GrowthController::class, 'refer'])->name('refer.store');
+    Route::get('wallet', [\App\Http\Controllers\Dashboard\GrowthController::class, 'wallet'])->name('wallet');
     // AI مساعد
     Route::get('ai', [\App\Http\Controllers\Dashboard\AiController::class, 'index'])->name('ai.index');
     Route::post('ai/ask', [\App\Http\Controllers\Dashboard\AiController::class, 'ask'])->name('ai.ask');

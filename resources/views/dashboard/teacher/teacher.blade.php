@@ -1,5 +1,4 @@
 @extends('dashboard.partials.master')
-@include('dashboard.partials.design-system')
 @push('styles')
     <link href="{{ asset('assets/css/datatables' . (isDarkMode() ? '.dark' : '') . '.bundle.css') }}" rel="stylesheet"
         type="text/css" />
@@ -138,23 +137,37 @@
     </div>
 
     <!-- Class intelligence -->
-    <section class="sec">
-        <div class="sec-head"><span class="sec-head__bar"></span>
-            <div><h2 class="sec-head__title">🧠 {{ __('ذكاء الفصل') }}</h2><p class="sec-head__desc">{{ __('المتعثرون وأضعف المواد في صفوفك') }}</p></div>
-            <a href="{{ route('admin.analytics.risk') }}" class="sec-head__aside btn btn-sm btn-light-warning">{{ __('كل المتعثرين') }}</a>
+    <div class="row g-6 mb-6">
+        <div class="col-xl-6">
+            <div class="card card-flush h-100">
+                <div class="card-header pt-5"><h3 class="card-title fw-bold text-gray-900">{{ __('طلاب يحتاجون تدخل') }}</h3>
+                <div class="card-toolbar"><a href="{{ route('admin.analytics.risk') }}" class="btn btn-sm btn-light-warning">{{ __('كل المتعثرين') }}</a></div></div>
+                <div class="card-body py-5">
+                    @forelse($atRisk ?? [] as $r)
+                    <div class="d-flex align-items-center gap-3 py-3 border-bottom">
+                        <span class="symbol symbol-35px"><span class="symbol-label bg-light-danger fw-bold">{{ mb_substr($r['student']->name, 0, 1) }}</span></span>
+                        <span class="flex-grow-1"><span class="d-block fw-bold text-gray-800 fs-7">{{ $r['student']->name }}</span><span class="d-block text-muted fs-8">{{ implode(' • ', $r['reasons'] ?? []) }}</span></span>
+                        <span class="badge badge-light-danger">{{ $r['avg'] ?? '—' }}%</span>
+                    </div>
+                    @empty<p class="text-muted fs-7 mb-0">{{ __('لا طلاب في خطر حالياً') }}</p>@endforelse
+                </div>
+            </div>
         </div>
-        <div class="row g-5">
-            <div class="col-xl-6"><div class="card card-flush h-100"><div class="card-header"><h3 class="card-title">⚠️ {{ __('طلاب يحتاجون تدخل') }}</h3></div>
-                <div class="card-body py-4">@forelse($atRisk ?? [] as $r)
-                <div class="rec"><span class="rec__icon">🔴</span><span class="rec__txt">{{ $r['student']->name }} <span class="text-muted">({{ __($r['student']->grade ?? '') }} — {{ $r['avg'] ?? '—' }}%)</span><span class="d-block fs-8 text-muted">{{ implode(' • ', $r['reasons'] ?? []) }}</span></span></div>
-                @empty<p class="text-muted mb-0">{{ __('لا طلاب في خطر حالياً') }}</p>@endforelse</div></div></div>
-            <div class="col-xl-6"><div class="card card-flush h-100"><div class="card-header"><h3 class="card-title">📉 {{ __('أضعف المواد') }}</h3></div>
-                <div class="card-body py-4">@forelse($weakSubjects ?? [] as $m)
-                <div class="mastery"><div class="mastery__top"><span class="fw-bold">{{ $m['subject'] }}</span><span class="text-muted">{{ $m['avg'] }}%</span></div>
-                <div class="mastery__bar"><span style="width:{{ min(100, $m['avg']) }}%"></span></div></div>
-                @empty<p class="text-muted mb-0">{{ __('لا بيانات كافية بعد') }}</p>@endforelse</div></div></div>
+        <div class="col-xl-6">
+            <div class="card card-flush h-100">
+                <div class="card-header pt-5"><h3 class="card-title fw-bold text-gray-900">{{ __('أضعف المواد') }}</h3></div>
+                <div class="card-body py-5">
+                    @forelse($weakSubjects ?? [] as $m)
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="min-w-100px me-3"><span class="fw-bold text-gray-800 fs-7">{{ $m['subject'] }}</span></div>
+                        <div class="progress h-8px w-100 me-3"><div class="progress-bar bg-danger" role="progressbar" style="width: {{ min(100, $m['avg']) }}%"></div></div>
+                        <span class="text-muted fs-8 fw-bold">{{ $m['avg'] }}%</span>
+                    </div>
+                    @empty<p class="text-muted fs-7 mb-0">{{ __('لا بيانات كافية بعد') }}</p>@endforelse
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
 </div>
 @endsection
 @push('scripts')

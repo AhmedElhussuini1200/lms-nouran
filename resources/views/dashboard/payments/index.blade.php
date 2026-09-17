@@ -12,7 +12,7 @@
 </select>
 </form>
 @if(in_array(auth('admin')->user()->type,['admin','teacher']))<a href="{{ route('admin.payments.create') }}" class="btn btn-primary"><i class="ki-outline ki-plus fs-2"></i> {{ __('فاتورة جديدة') }}</a>
-<form method="POST" action="{{ route('admin.payments.generate') }}" class="d-inline">@csrf<input type="hidden" name="month" value="{{ request('month', date('Y-m')) }}" /><button class="btn btn-light-success" onclick="return confirm('{{ __('توليد فواتير الشهر من باقات المدرسين؟') }}')">🪄 {{ __('توليد فواتير الشهر') }}</button></form>
+<form method="POST" action="{{ route('admin.payments.generate') }}">@csrf<input type="hidden" name="month" value="{{ request('month', date('Y-m')) }}" /><button class="btn btn-light-primary" onclick="return confirm('{{ __('توليد فواتير الشهر من باقات المدرسين؟') }}')"><i class="ki-outline ki-arrows-circle fs-2"></i> {{ __('توليد فواتير الشهر') }}</button></form>
 <a href="{{ route('admin.payments.monthly-pdf', ['month' => request('month', date('Y-m'))]) }}" class="btn btn-light-danger"><i class="ki-outline ki-file-down fs-2"></i> PDF</a>@endif
 </div></div></div>
 

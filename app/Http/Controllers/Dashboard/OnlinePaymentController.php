@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
 
 class OnlinePaymentController extends Controller
 {
@@ -154,7 +156,7 @@ class OnlinePaymentController extends Controller
         $mpdf->SetDirectionality('rtl');
         $mpdf->WriteHTML($html);
         $path = "receipts/receipt-{$payment->id}.pdf";
-        \Storage::disk('public')->put($path, $mpdf->Output('', 'S'));
+        Storage::disk('public')->put($path, $mpdf->Output('', 'S'));
         $payment->update(['receipt_path' => $path]);
 
         return response($mpdf->Output('', 'S'), 200, [

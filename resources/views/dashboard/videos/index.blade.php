@@ -9,11 +9,11 @@
         </div>
         <div class="mt-4 mt-md-0 d-flex gap-3">
             <form method="GET" action="{{ route('admin.videos.index') }}" class="d-flex gap-2">
-                <select data-placeholder="{{ __('الصف الدراسي') }}" data-control="select2" name="grade" class="form-select w-auto" onchange="this.form.submit()">
+                @if(in_array(auth('admin')->user()->type,['admin','teacher']))<select data-placeholder="{{ __('الصف الدراسي') }}" data-control="select2" name="grade" class="form-select w-auto" onchange="this.form.submit()">
                     @foreach($grades as $key => $label)
                         <option value="{{ $key }}" {{ request('grade') == $key ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
-                </select>
+                </select>@else<span class="badge badge-light-info fs-7">{{ __('صفك') }}: {{ gradeLockLabel() }}</span>@endif
                 @if(auth('admin')->user()->type==='admin' && isset($teachers))<select data-placeholder="{{ __('مدرس') }}" data-control="select2" name="teacher" class="form-select w-auto" onchange="this.form.submit()"><option value="all">{{ __('كل المدرسين') }}</option>@foreach($teachers as $t)<option value="{{ $t->id }}" {{ request('teacher')==$t->id?'selected':'' }}>{{ $t->name }}{{ $t->subject ? ' - '.$t->subject : '' }}</option>@endforeach</select>@endif
             </form>
             @if(in_array(auth('admin')->user()->type, ['admin', 'teacher']))
@@ -45,6 +45,7 @@
                         <p class="text-muted fs-7 mb-4">{{ \Illuminate\Support\Str::limit($video->description, 90) }}</p>
                         <div class="d-flex align-items-center justify-content-between">
                             <span class="badge badge-light-info">{{ __($video->grade) }}</span>
+                            @if(!youtubeId($video->video_url))<span class="badge badge-light-danger" title="{{ __('رابط الفيديو غير صالح') }}"><i class="ki-outline ki-information-5 fs-5"></i></span>@endif
                             <span class="text-muted fs-8">
                                 <i class="ki-outline ki-eye fs-7 me-1"></i>{{ $video->views_count }}
                                 @if($video->duration_seconds)
@@ -61,7 +62,7 @@
         </div>
     @empty
         <div class="col-12">
-            <div class="card"><div class="card-body text-center text-muted py-10">{{ __('لا توجد فيديوهات') }}</div></div>
+            <div class="card"><div class="card-body text-center text-muted py-10">{{ __('لا توجد فيديوهات') }}@if(in_array(auth('admin')->user()->type,['student','parent'])) — {{ __('لسه مفيش فيديوهات لصفك، تابع مع المدرس') }}@endif</div></div>
         </div>
     @endforelse
 </div>

@@ -29,6 +29,13 @@ class StoreAdminRequest extends FormRequest
             'whatsapp_key' => ['nullable', 'string', 'max:255'],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['exists:roles,id'],
+            // ولي الأمر لازم يتربط بطالب — مينفعش من غير أبناء
+            'children' => [Rule::requiredIf($this->type === 'parent'), 'nullable', 'array', 'min:1'],
+            'children.*' => ['exists:admins,id'],
+            // بيانات ولي الأمر جوه فورم الطالب (اختياري — لو نسيت ضيفه بعدين مع اختيار الطالب)
+            'parent_name' => ['nullable', 'string', 'max:255'],
+            'parent_email' => ['nullable', 'email', 'max:255'],
+            'parent_phone' => ['nullable', 'string', 'max:20'],
         ];
     }
 }

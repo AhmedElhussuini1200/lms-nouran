@@ -15,6 +15,8 @@
 <button class="btn btn-light">{{ __('بحث') }}</button>
 </form>
 <a href="{{ route('admin.admins.create') }}" class="btn btn-primary"><i class="ki-outline ki-plus fs-2"></i> {{ __('إضافة') }}</a>
+<a href="{{ route('admin.admins.quick-form') }}" class="btn btn-light-primary"><i class="ki-outline ki-plus fs-2"></i> {{ __('إضافة سريعة') }}</a>
+<a href="{{ route('admin.admins.import-form') }}" class="btn btn-light-success"><i class="ki-outline ki-file-up fs-2"></i> {{ __('شيت إكسل') }}</a>
 </div></div></div>
 
 <div class="card"><div class="card-body p-0"><div class="table-responsive"><table class="table table-row-bordered align-middle gy-4 mb-0">

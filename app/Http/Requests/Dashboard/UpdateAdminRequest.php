@@ -31,7 +31,7 @@ class UpdateAdminRequest extends FormRequest
             'whatsapp_key' => ['nullable', 'string', 'max:255'],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['exists:roles,id'],
-            'children' => ['nullable', 'array'],
+            'children' => [Rule::requiredIf($this->type === 'parent'), 'nullable', 'array', 'min:1'],
             'children.*' => ['exists:admins,id'],
             'teachers' => ['nullable', 'array'],
             'teachers.*' => ['exists:admins,id'],

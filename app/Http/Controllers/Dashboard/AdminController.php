@@ -79,4 +79,34 @@ class AdminController extends Controller
     {
         return response($this->service->status($admin));
     }
+
+    public function importForm()
+    {
+        $this->authorize('create_admins');
+        return $this->service->importForm();
+    }
+
+    public function importStore(Request $request)
+    {
+        $this->authorize('create_admins');
+        return $this->service->importStore($request);
+    }
+
+    public function importTemplate()
+    {
+        $this->authorize('create_admins');
+        return $this->service->importTemplate();
+    }
+
+    public function quickForm()
+    {
+        $this->authorize('create_admins');
+        return $this->service->quickForm();
+    }
+
+    public function quickStore(Request $request)
+    {
+        $this->authorize('create_admins');
+        return $this->service->quickStore($request);
+    }
 }

@@ -6,6 +6,8 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Services\Dashboard\PaymentService;
+use Illuminate\Support\Facades\Artisan;
+
 
 class PaymentController extends Controller
 {
@@ -62,9 +64,9 @@ class PaymentController extends Controller
     {
         $this->authorize('create_payments');
         $request->validate(['month' => ['nullable', 'regex:/^\d{4}-\d{2}$/']]);
-        \Artisan::call('lms:invoices', ['month' => $request->month ?: date('Y-m')]);
+        Artisan::call('lms:invoices', ['month' => $request->month ?: date('Y-m')]);
 
         return redirect()->route('admin.payments.index', ['month' => $request->month ?: date('Y-m')])
-            ->with('success', trim(\Artisan::output()));
+            ->with('success', trim(Artisan::output()));
     }
 }

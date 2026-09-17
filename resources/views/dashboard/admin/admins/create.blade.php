@@ -26,7 +26,37 @@
 @endforeach
 </div></div>
 @endif
+{{-- ولي الأمر: لازم اختيار طالب إجباري --}}
+<div class="col-12" id="parent-children" style="display:none"><label class="form-label required">{{ __('الأبناء (إجباري لولي الأمر)') }}</label>
+<select data-placeholder="{{ __('اختار طالب على الأقل') }}" data-control="select2" name="children[]" class="form-select" multiple size="5">
+@foreach($students as $s)<option value="{{ $s->id }}">{{ $s->name }} - {{ __($s->grade ?? '') }}</option>@endforeach
+</select></div>
+{{-- بيانات ولي الأمر جوه فورم الطالب --}}
+<div class="col-12" id="student-parent" style="display:none">
+<div class="border border-dashed rounded p-4">
+<div class="fw-bold mb-3"><i class="ki-outline ki-profile-user fs-4 me-1"></i>{{ __('بيانات ولي الأمر (اختياري — لو نسيت ضيفه بعدين مع اختيار الطالب)') }}</div>
+<div class="row g-4">
+<div class="col-md-4"><label class="form-label">{{ __('اسم ولي الأمر') }}</label><input type="text" name="parent_name" class="form-control" value="{{ old('parent_name') }}" /></div>
+<div class="col-md-4"><label class="form-label">{{ __('بريد ولي الأمر') }}</label><input type="email" name="parent_email" class="form-control" dir="ltr" value="{{ old('parent_email') }}" /></div>
+<div class="col-md-4"><label class="form-label">{{ __('هاتف ولي الأمر') }}</label><input type="text" name="parent_phone" class="form-control" dir="ltr" value="{{ old('parent_phone') }}" /></div>
+</div>
+</div>
+</div>
 </div></div>
 <div class="card-footer d-flex justify-content-end"><button class="btn btn-primary">{{ __('حفظ') }}</button></div>
 </form></div>
 @endsection
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSel = document.getElementById('user-type');
+    const pc = document.getElementById('parent-children');
+    const sp = document.getElementById('student-parent');
+    function toggle() {
+        if (pc) pc.style.display = typeSel.value === 'parent' ? '' : 'none';
+        if (sp) sp.style.display = typeSel.value === 'student' ? '' : 'none';
+    }
+    if (typeSel) { typeSel.addEventListener('change', toggle); toggle(); }
+});
+</script>
+@endpush

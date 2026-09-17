@@ -323,8 +323,8 @@ if (!function_exists('notifyStudentsByGrade')) {
 }
 
 if (!function_exists('brand')) {
-    // الهوية البصرية: لو الداخل مدرس وعنده هوية خاصة → المشروع كله باسمه
-    // غير كده: الهوية العامة من settings
+    // الهوية ديناميك: المدرس → "منصة + اسمه" (أو brand_name لو مظبطه)
+    // الطالب → هوية مدرسه المختار — ولي الأمر → هوية مدرس أبنائه لو واحد — غير كده العامة
     function brand($key, $default = null)
     {
         static $cache = null;
@@ -337,17 +337,32 @@ if (!function_exists('brand')) {
         }
         try {
             $me = auth('admin')->user();
+            $teacher = null;
             if ($me && $me->type === 'teacher') {
+                $teacher = $me;
+            } elseif ($me && $me->type === 'student' && function_exists('currentTeacher')) {
+                $teacher = currentTeacher($me);
+            } elseif ($me && $me->type === 'parent') {
+                $tids = collect();
+                foreach ($me->students ?? [] as $child) {
+                    $tids = $tids->merge($child->enrolledTeachers()->pluck('admins.id'));
+                }
+                if ($tids->unique()->count() === 1) {
+                    $teacher = \App\Models\Admin::find($tids->first());
+                }
+            }
+            if ($teacher) {
+                if ($key === 'site_name') {
+                    return $teacher->brand_name ?: __('منصة') . ' ' . $teacher->name;
+                }
                 $mine = [
-                    'site_name' => $me->brand_name ?: $me->name,
-                    'primary_color' => $me->brand_primary,
-                    'secondary_color' => $me->brand_secondary,
-                    'logo' => $me->brand_logo,
+                    'primary_color' => $teacher->brand_primary,
+                    'secondary_color' => $teacher->brand_secondary,
+                    'logo' => $teacher->brand_logo,
                 ];
                 if (! empty($mine[$key])) {
                     return $mine[$key];
                 }
-                // لو المدرس مش مظبط لون → يقع على العام
             }
         } catch (\Throwable $e) {
         }
@@ -986,5 +1001,25 @@ if (!function_exists('currentTeacher')) {
         }
 
         return null;
+    }
+}
+
+if (!function_exists('gradeLockLabel')) {
+    // نص شارة الصف المقفول للطالب/ولي الأمر
+    function gradeLockLabel($user = null): string
+    {
+        $user = $user ?: auth('admin')->user();
+        if (! $user) {
+            return '';
+        }
+        if ($user->type === 'student') {
+            return $user->grade ? __($user->grade) : __('بدون صف');
+        }
+        if ($user->type === 'parent') {
+            $g = $user->students()->pluck('admins.grade')->filter()->unique()->map(fn ($x) => __($x))->implode('، ');
+            return $g ?: __('بدون صف');
+        }
+
+        return '';
     }
 }

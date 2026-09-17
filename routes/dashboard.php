@@ -41,6 +41,8 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     Route::get('attendance/scan/{token}', [AttendanceController::class, 'scan'])->name('attendance.scan');
     Route::get('courses-events', [CourseController::class, 'events'])->name('courses.events');
     Route::get('courses-calendar', [CourseController::class, 'calendar'])->name('courses.calendar');
+    Route::get('courses-quick', [CourseController::class, 'quickForm'])->name('courses.quick-form');
+    Route::post('courses-quick', [CourseController::class, 'quickStore'])->name('courses.quick-store');
     Route::resource('courses', CourseController::class)->middleware('owns');
     Route::resource('assignments', AssignmentController::class)->middleware('owns');
     Route::resource('exams', ExamController::class)->middleware('owns');
@@ -113,6 +115,11 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     Route::resource('roles', RoleController::class)->except(['show']);
 
 
+    Route::get('admins-import', [AdminController::class, 'importForm'])->name('admins.import-form');
+    Route::post('admins-import', [AdminController::class, 'importStore'])->name('admins.import-store');
+    Route::get('admins-template', [AdminController::class, 'importTemplate'])->name('admins.template');
+    Route::get('admins-quick', [AdminController::class, 'quickForm'])->name('admins.quick-form');
+    Route::post('admins-quick', [AdminController::class, 'quickStore'])->name('admins.quick-store');
     Route::resource('admins', AdminController::class);
 
 

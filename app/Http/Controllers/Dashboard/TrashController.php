@@ -104,6 +104,16 @@ class TrashController extends Controller
         $model = app('App\\Models\\' . $modelName);
         $resultRestore = $model->onlyTrashed()->find($id)->restore();
 
+        // طالب رجع من السلة → رجّع أولياء أموره المحذوفين معاه
+        if ($modelName === 'Admin' && $resultRestore) {
+            $student = $model->find($id);
+            if ($student && $student->type === 'student') {
+                foreach ($student->parents()->onlyTrashed()->get() as $parent) {
+                    $parent->restore();
+                }
+            }
+        }
+
         // if ($modelName == "Admin" && $resultRestore) {
 
         //     return redirect()->route('dashboard.admins.index');

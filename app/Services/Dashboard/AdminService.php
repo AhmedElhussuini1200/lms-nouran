@@ -6,6 +6,9 @@ use App\Models\Role;
 use App\Models\Admin;
 use App\Http\Requests\Dashboard\StoreAdminRequest;
 use App\Repositories\Dashboard\Contracts\AdminRepositoryInterface;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
 
 class AdminService
 {
@@ -73,14 +76,45 @@ class AdminService
         $roles = Role::all();
         $types = ['admin' => __('إدمن'), 'teacher' => __('مدرس'), 'student' => __('طالب'), 'parent' => __('ولي أمر')];
         $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
+        $students = Admin::where('type', 'student')->orderBy('name')->get(['id', 'name', 'grade']);
 
-        return view('dashboard.admin.admins.create', compact('roles', 'types', 'grades'));
+        return view('dashboard.admin.admins.create', compact('roles', 'types', 'grades', 'students'));
     }
 
     public function store(StoreAdminRequest $request)
     {
         $data = $request->validated();
-        $admin = $this->adminRepository->store($data);
+        $admin = DB::transaction(function () use ($data) {
+            $admin = $this->adminRepository->store(collect($data)->except(['children', 'parent_name', 'parent_email', 'parent_phone'])->toArray());
+
+            // ولي الأمر يتربط بأبنائه إجباري
+            if ($admin->type === 'parent') {
+                $admin->students()->sync($data['children'] ?? []);
+            }
+
+            // ولي الأمر جوه فورم الطالب: موجود؟ اربط — مش موجود؟ أنشئ واربط
+            if ($admin->type === 'student' && (! empty($data['parent_name']) || ! empty($data['parent_email']) || ! empty($data['parent_phone']))) {
+                $parent = null;
+                if (! empty($data['parent_email'])) {
+                    $parent = Admin::where('email', $data['parent_email'])->first();
+                }
+                if (! $parent && ! empty($data['parent_phone'])) {
+                    $parent = Admin::where('phone', $data['parent_phone'])->first();
+                }
+                if (! $parent) {
+                    $parent = Admin::create([
+                        'name' => $data['parent_name'] ?: __('ولي أمر') . ' ' . $admin->name,
+                        'email' => $data['parent_email'] ?: 'parent-' . $admin->id . '@lms.local',
+                        'phone' => $data['parent_phone'] ?? null,
+                        'type' => 'parent',
+                        'password' => Hash::make('12345678'),
+                    ]);
+                }
+                $parent->students()->syncWithoutDetaching([$admin->id]);
+            }
+
+            return $admin;
+        });
 
         if ($request->ajax()) {
             return response()->json(['message' => __('تمت الإضافة بنجاح'), 'url' => route('admin.admins.show', $admin->id)]);
@@ -98,6 +132,87 @@ class AdminService
         $teachers = $admin->type === 'student' ? Admin::where('type', 'teacher')->orderBy('name')->get(['id', 'name', 'subject']) : collect();
 
         return view('dashboard.admin.admins.edit', compact('admin', 'roles', 'types', 'grades', 'students', 'teachers'));
+    }
+
+    // صفحة رفع شيت الطلبة
+    public function importForm()
+    {
+        return view('dashboard.admin.admins.import');
+    }
+
+    // تنفيذ رفع الشيت (إنشاء + تحديث الموجود + تسجيل مع مدرسين)
+    public function importStore(\Illuminate\Http\Request $request)
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120']]);
+        $import = new \App\Imports\StudentsImport();
+        \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('file'));
+        $s = $import->stats();
+
+        return redirect()->route('admin.admins.index', ['type' => 'student'])
+            ->with('success', __('تم الاستيراد') . ": {$s['created']} " . __('جديد') . " • {$s['updated']} " . __('تحديث') . ($s['failed'] ? " • {$s['failed']} " . __('صف مرفوض') : ''));
+    }
+
+    // قالب الشيت
+    public function importTemplate()
+    {
+        $rows = collect([['name' => 'اسم الطالب', 'email' => 'student@mail.com', 'phone' => '01xxxxxxxxx', 'grade' => '1', 'password' => '12345678', 'teacher_emails' => 'teacher@lms.com', 'parent_name' => 'ولي الأمر', 'parent_email' => 'parent@mail.com', 'parent_phone' => '01xxxxxxxxx']]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            public function __construct(public $rows) {}
+            public function collection()
+            {
+                return $this->rows;
+            }
+            public function headings(): array
+            {
+                return ['name', 'email', 'phone', 'grade', 'password', 'teacher_emails', 'parent_name', 'parent_email', 'parent_phone'];
+            }
+        }, 'students-template.xlsx');
+    }
+
+    // إضافة سريعة repeater: صفحة
+    public function quickForm()
+    {
+        $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
+        $teachers = Admin::where('type', 'teacher')->orderBy('name')->get(['id', 'name', 'subject']);
+
+        return view('dashboard.admin.admins.quick', compact('grades', 'teachers'));
+    }
+
+    // إضافة سريعة repeater: حفظ صفوف متعددة
+    public function quickStore(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'rows' => ['required', 'array', 'min:1', 'max:50'],
+            'rows.*.name' => ['required', 'string', 'max:255'],
+            'rows.*.email' => ['required', 'email', 'max:255', 'distinct'],
+            'rows.*.phone' => ['nullable', 'string', 'max:20'],
+            'rows.*.grade' => ['required', 'in:1_secondary,2_secondary,3_secondary'],
+            'rows.*.teacher_id' => ['nullable', 'exists:admins,id'],
+        ]);
+        $created = 0;
+        $skipped = [];
+        foreach ($request->rows as $i => $row) {
+            if (Admin::where('email', $row['email'])->exists()) {
+                $skipped[] = $i + 1;
+                continue;
+            }
+            $s = Admin::create([
+                'name' => $row['name'], 'email' => $row['email'], 'phone' => $row['phone'] ?? null,
+                'type' => 'student', 'grade' => $row['grade'],
+                'password' => \Illuminate\Support\FacadesHash::make('12345678'),
+            ]);
+            if (! empty($row['teacher_id'])) {
+                $s->enrolledTeachers()->attach($row['teacher_id']);
+            }
+            $created++;
+        }
+        $msg = __('تم إنشاء') . " $created " . __('طالب') . ' (' . __('كلمة المرور الافتراضية') . ': 12345678)';
+        if ($skipped) {
+            $msg .= ' • ' . __('تخطي صفوف مكررة') . ': ' . implode('، ', $skipped);
+        }
+
+        return redirect()->route('admin.admins.index', ['type' => 'student'])->with('success', $msg);
     }
 
     public function update($data, $admin)
@@ -134,7 +249,19 @@ class AdminService
         }
 
         $isAjax = $data instanceof \Illuminate\Http\Request ? $data->ajax() : request()->ajax();
-        $this->adminRepository->destroy($data, $admin);
+        DB::transaction(function () use ($data, $admin) {
+            $this->adminRepository->destroy($data, $admin);
+
+            // طالب اتمسح → أولياء أموره اللي مبقاش لهم أبناء عايشين يتمسحوا معاه (soft)
+            if ($admin->type === 'student') {
+                foreach ($admin->parents()->withTrashed()->get() as $parent) {
+                    $hasLiving = $parent->students()->where('admins.id', '!=', $admin->id)->exists();
+                    if (! $hasLiving && ! $parent->trashed()) {
+                        $parent->delete();
+                    }
+                }
+            }
+        });
 
         if ($isAjax) {
             return response()->json(['message' => __('تم الحذف بنجاح'), 'url' => route('admin.admins.index')]);

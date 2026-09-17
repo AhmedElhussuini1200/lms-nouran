@@ -8,6 +8,8 @@ use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
 
 // استقبال الواجبات عبر واتساب: يطابق رقم الهاتف مع طالب ثم يسجّل تسليمة
 class WhatsappBotController extends Controller
@@ -49,7 +51,7 @@ class WhatsappBotController extends Controller
             try {
                 $contents = file_get_contents($request->media_url);
                 $filePath = 'whatsapp_hw/' . $student->id . '_' . time() . '.jpg';
-                \Storage::disk('public')->put($filePath, $contents);
+                Storage::disk('public')->put($filePath, $contents);
             } catch (\Throwable) {
             }
         }

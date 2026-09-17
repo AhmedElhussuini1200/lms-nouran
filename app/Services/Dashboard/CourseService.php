@@ -101,6 +101,49 @@ class CourseService
         return view('dashboard.courses.calendar');
     }
 
+    // إضافة سريعة repeater للحصص: صفحة
+    public function quickForm()
+    {
+        $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
+
+        return view('dashboard.courses.quick', compact('grades'));
+    }
+
+    // إضافة سريعة repeater للحصص: حفظ صفوف متعددة
+    public function quickStore(Request $request)
+    {
+        $request->validate([
+            'rows' => ['required', 'array', 'min:1', 'max:50'],
+            'rows.*.title' => ['required', 'string', 'max:255', 'distinct'],
+            'rows.*.grade' => ['required', 'in:1_secondary,2_secondary,3_secondary'],
+            'rows.*.scheduled_at' => ['nullable', 'date'],
+            'rows.*.price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+        $me = auth('admin')->user();
+        $created = 0;
+        $skipped = [];
+        foreach ($request->rows as $i => $row) {
+            $exists = \App\Models\Course::where('title', $row['title'])->where('grade', $row['grade'])->where('teacher_id', $me->type === 'teacher' ? $me->id : null)->exists();
+            if ($exists) {
+                $skipped[] = $i + 1;
+                continue;
+            }
+            \App\Models\Course::create([
+                'title' => $row['title'], 'grade' => $row['grade'],
+                'teacher_id' => $me->type === 'teacher' ? $me->id : ($row['teacher_id'] ?? $me->id),
+                'scheduled_at' => $row['scheduled_at'] ?? now(),
+                'price' => $row['price'] ?? 0,
+            ]);
+            $created++;
+        }
+        $msg = __('تم إنشاء') . " $created " . __('حصة');
+        if ($skipped) {
+            $msg .= ' • ' . __('تخطي صفوف مكررة') . ': ' . implode('، ', $skipped);
+        }
+
+        return redirect()->route('admin.courses.index')->with('success', $msg);
+    }
+
     public function events(Request $request)
     {
         $user = auth('admin')->user();

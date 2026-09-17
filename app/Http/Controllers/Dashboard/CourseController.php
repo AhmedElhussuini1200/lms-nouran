@@ -65,6 +65,18 @@ class CourseController extends Controller
         return $this->service->calendar();
     }
 
+    public function quickForm()
+    {
+        $this->authorize('create_courses');
+        return $this->service->quickForm();
+    }
+
+    public function quickStore(Request $request)
+    {
+        $this->authorize('create_courses');
+        return $this->service->quickStore($request);
+    }
+
     public function events(Request $request)
     {
         return $this->service->events($request);

@@ -5,11 +5,11 @@
 <p class="text-muted mb-0">{{ $date }} • {{ count($students) }} {{ __('طالب') }}</p></div>
 <div class="d-flex gap-2 align-items-center">
 @if($course->qr_token)
-<a href="{{ route('admin.attendance.scan', $course->qr_token) }}" class="btn btn-sm btn-light-success">📱 {{ __('رابط الحضور الذاتي QR') }}</a>
+<a href="{{ route('admin.attendance.scan', $course->qr_token) }}" class="btn btn-sm btn-light-success"><i class="ki-outline ki-qr fs-4"></i> {{ __('رابط الحضور الذاتي QR') }}</a>
 <code class="fs-8">{{ route('admin.attendance.scan', $course->qr_token) }}</code>
 @endif
-@if($course->is_live)<a href="{{ route('admin.live.room', $course->id) }}" class="btn btn-sm btn-danger">🔴 {{ __('غرفة البث') }}</a>
-@else<form method="POST" action="{{ route('admin.live.start', $course->id) }}">@csrf<button class="btn btn-sm btn-primary">📡 {{ __('بدء بث') }}</button></form>@endif
+@if($course->is_live)<a href="{{ route('admin.live.room', $course->id) }}" class="btn btn-sm btn-danger"><i class="ki-outline ki-video fs-4"></i> {{ __('غرفة البث') }}</a>
+@else<form method="POST" action="{{ route('admin.live.start', $course->id) }}">@csrf<button class="btn btn-sm btn-primary"><i class="ki-outline ki-broadcast fs-4"></i> {{ __('بدء بث') }}</button></form>@endif
 </div></div>
 <form method="POST" action="{{ route('admin.attendance.store', $course->id) }}">@csrf
 <div class="card-body">

@@ -7,6 +7,8 @@ Route::post('login', [MobileController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('me', [MobileController::class, 'me']);
+    Route::get('my-teachers', [MobileController::class, 'myTeachers']);
+    Route::post('select-teacher', [MobileController::class, 'selectTeacher']);
     Route::get('courses', [MobileController::class, 'courses']);
     Route::get('videos', [MobileController::class, 'videos']);
     Route::get('exams', [MobileController::class, 'exams']);

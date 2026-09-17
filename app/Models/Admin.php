@@ -34,6 +34,7 @@ class Admin extends Authenticatable
         'price_per_class',
         'pay_methods',
         'pay_details',
+        'current_teacher_id',
         'phone',
         'is_blocked',
         'whatsapp_key',

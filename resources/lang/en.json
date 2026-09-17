@@ -660,5 +660,17 @@
   "توليد فواتير الشهر": "Generate month invoices",
   "توليد فواتير الشهر من باقات المدرسين؟": "Generate month invoices from teacher plans?",
   "باقة": "Plan",
-  "هتحضر عند مين؟": "Who will you attend with?"
+  "هتحضر عند مين؟": "Who will you attend with?",
+  "كود تأكيد الدفع": "Payment confirmation code",
+  "صالح 5 دقائق": "valid 5 minutes",
+  "ضيف رقم موبايلك في البروفايل الأول عشان يوصلك كود التحقق": "Add your mobile number in your profile first to receive the verification code",
+  "كود التحقق": "Verification code",
+  "بعتنا كود 6 أرقام على واتسابك — دخله للتأكيد": "We sent a 6-digit code to your WhatsApp - enter it to confirm",
+  "الفاتورة": "Invoice",
+  "تحقق وادفع": "Verify and pay",
+  "ابعت الكود تاني": "Resend code",
+  "الكود انتهت صلاحيته — اطلب كود جديد": "Code expired - request a new one",
+  "محاولات كتير غلط — اطلب كود جديد": "Too many wrong attempts - request a new code",
+  "الكود غلط — فاضل": "Wrong code - remaining",
+  "محاولات": "attempts"
 }

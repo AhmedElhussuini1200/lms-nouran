@@ -50,13 +50,65 @@ class OnlinePaymentController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    // تأكيد الدفع (callback من البوابة أو تأكيد يدوي)
+    // تأكيد الدفع — خطوة 1: إرسال OTP واتساب لرقم الدافع
     public function confirm(Request $request, Payment $payment, WhatsappService $whatsapp)
     {
-        $request->validate(['paid_amount' => ['required', 'numeric', 'min:1']]);
+        $request->validate(['paid_amount' => ['required', 'numeric', 'min:1', 'max:' . max(1, (float) $payment->remaining)]]);
         $me = auth('admin')->user();
+
+        // صلاحية: الطالب نفسه أو ولي أمره فقط
+        abort_unless(
+            ($me->type === 'student' && $payment->student_id === $me->id) ||
+            ($me->type === 'parent' && $me->students()->where('admins.id', $payment->student_id)->exists()) ||
+            in_array($me->type, ['admin', 'teacher']),
+            403
+        );
+
+        if (! $me->phone) {
+            return back()->with('error_message', __('ضيف رقم موبايلك في البروفايل الأول عشان يوصلك كود التحقق'));
+        }
+
+        // ثابت للتجربة حالياً — يتبدل بكود عشوائي في الإنتاج
+        $code = '123456';
+        $key = "pay_otp:{$payment->id}:{$me->id}";
+        \Illuminate\Support\Facades\Cache::put($key, ['hash' => hash('sha256', $code), 'amount' => (float) $request->paid_amount, 'tries' => 0], now()->addMinutes(5));
+
+        $whatsapp->send(
+            $me->phone,
+            __('كود تأكيد الدفع') . ': ' . $code . ' — ' . $request->paid_amount . ' ج (' . __('صالح 5 دقائق') . ')',
+            $me->whatsapp_key ?? '',
+            $me->id
+        );
+
+        return view('dashboard.payments.otp', compact('payment'));
+    }
+
+    // تأكيد الدفع — خطوة 2: التحقق من OTP ثم التسجيل
+    public function verifyOtp(Request $request, Payment $payment, WhatsappService $whatsapp)
+    {
+        $request->validate(['code' => ['required', 'digits:6']]);
+        $me = auth('admin')->user();
+        $key = "pay_otp:{$payment->id}:{$me->id}";
+        $data = \Illuminate\Support\Facades\Cache::get($key);
+
+        if (! $data) {
+            return back()->with('error_message', __('الكود انتهت صلاحيته — اطلب كود جديد'));
+        }
+        if (($data['tries'] ?? 0) >= 5) {
+            \Illuminate\Support\Facades\Cache::forget($key);
+
+            return back()->with('error_message', __('محاولات كتير غلط — اطلب كود جديد'));
+        }
+        if (! hash_equals($data['hash'], hash('sha256', $request->code))) {
+            $data['tries']++;
+            \Illuminate\Support\Facades\Cache::put($key, $data, now()->addMinutes(5));
+
+            return back()->with('error_message', __('الكود غلط — فاضل') . ' ' . (5 - $data['tries']) . ' ' . __('محاولات'));
+        }
+        \Illuminate\Support\Facades\Cache::forget($key);
+
         $payment->update([
-            'paid_amount' => $payment->paid_amount + $request->paid_amount,
+            'paid_amount' => $payment->paid_amount + $data['amount'],
             'paid_at' => now(),
             // تسجيل الدافع الفعلي (ولي الأمر غالباً) — الفاتورة تفضل باسم الطالب
             'paid_by' => $me->id,
@@ -67,8 +119,8 @@ class OnlinePaymentController extends Controller
         \App\Http\Controllers\Dashboard\GrowthController::teacherCommission($payment->fresh());
 
         foreach ($payment->student->parents ?? [] as $parent) {
-            notifyAdmin($parent->id, __('تم استلام دفعة'), $payment->student->name . ' - ' . $request->paid_amount . ' ج', 'success', route('admin.payments.index'));
-            $whatsapp->send($parent->phone ?? '', __('تم استلام دفعة') . ': ' . $request->paid_amount . ' ج - ' . __('المرجع') . ': ' . ($payment->transaction_ref ?? '-'), $parent->whatsapp_key ?? '', $parent->id);
+            notifyAdmin($parent->id, __('تم استلام دفعة'), $payment->student->name . ' - ' . $data['amount'] . ' ج', 'success', route('admin.payments.index'));
+            $whatsapp->send($parent->phone ?? '', __('تم استلام دفعة') . ': ' . $data['amount'] . ' ج - ' . __('المرجع') . ': ' . ($payment->transaction_ref ?? '-'), $parent->whatsapp_key ?? '', $parent->id);
         }
 
         return redirect()->route('admin.onlinepay.receipt', $payment->id)->with('success', __('تم تأكيد الدفع'));

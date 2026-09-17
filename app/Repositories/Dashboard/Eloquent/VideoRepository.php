@@ -16,10 +16,12 @@ class VideoRepository implements VideoRepositoryInterface
             ->orderBy('created_at', 'desc');
 
         // الطالب يشوف فيديوهات الصف بتاعه بس
-        if ($user && $user->type === 'student') {
-            // لو الطالب ملوش صف محدد → where grade null = مفيش نتائج (مش كل المحتوى)
-
-            $query->where('grade', $user->grade);
+        // قفل الصف: الطالب صفه فقط وولي الأمر صفوف أبنائه — يتجاهل أي grade في الرابط
+        $allowed = allowedGrades($user);
+        if ($allowed !== null) {
+            $query->whereIn('grade', $allowed ?: ['__none__']);
+        } elseif ($request->filled('grade') && $request->grade !== 'all') {
+            $query->where('grade', $request->grade);
         }
 
         // المدرس يشوف المحتوى بتاعه فقط (منع التضارب بين المدرسين)
@@ -27,10 +29,6 @@ class VideoRepository implements VideoRepositoryInterface
             $query->where('teacher_id', $user->id);
         }
 
-        // فلتر اختياري بالصف
-        if ($request->filled('grade') && $request->grade !== 'all') {
-            $query->where('grade', $request->grade);
-        }
 
         // فلتر المدرس (للأدمن) والمادة — ديناميكية تعدد المدرسين
         if ($request->filled('teacher') && $request->teacher !== 'all') {

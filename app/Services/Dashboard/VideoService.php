@@ -175,7 +175,12 @@ class VideoService
     {
         $user = auth('admin')->user();
 
-        if ($user->type === 'admin' || $user->type === 'parent') {
+        if ($user->type === 'admin') {
+            return;
+        }
+        if ($user->type === 'parent') {
+            // ولي الأمر: صفوف أبنائه فقط
+            abort_unless(in_array($video->grade, allowedGrades($user) ?? []), 403, __('غير مصرح لك'));
             return;
         }
 
@@ -190,16 +195,6 @@ class VideoService
 
     protected function normalizeVideoUrl(string $url): string
     {
-        // youtube watch -> embed
-        if (preg_match('/youtube\.com\/watch\?v=([^&]+)/', $url, $m)) {
-            return 'https://www.youtube-nocookie.com/embed/' . $m[1] . '?rel=0';
-        }
-
-        // youtu.be short -> embed
-        if (preg_match('/youtu\.be\/([^?&]+)/', $url, $m)) {
-            return 'https://www.youtube-nocookie.com/embed/' . $m[1] . '?rel=0';
-        }
-
-        return $url;
+        return youtubeEmbed($url) ?? $url;
     }
 }

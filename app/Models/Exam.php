@@ -11,6 +11,7 @@ class Exam extends Model
         'description',
         'grade',
         'teacher_id',
+        'course_id',
         'subject',
         'exam_date',
         'duration_minutes',
@@ -37,6 +38,11 @@ class Exam extends Model
     public function teacher()
     {
         return $this->belongsTo(Admin::class, 'teacher_id');
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class, 'course_id');
     }
 
     public function results()

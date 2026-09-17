@@ -24,7 +24,13 @@ class OnlinePaymentController extends Controller
         // رابط الدفع الحقيقي إن توفر
         $gatewayUrl = $realUrl ?? ($fawry['paymentUrl'] ?? null);
 
-        return view('dashboard.payments.checkout', compact('payment', 'provider', 'gatewayUrl'));
+        // المدرس المستلم: مدرس صف الطالب (تدفع لمين؟)
+        $payment->loadMissing('student');
+        $teacher = \App\Models\Course::where('grade', $payment->student->grade ?? null)
+            ->with('teacher:id,name,brand_name,pay_methods,pay_details,monthly_classes,price_per_class')
+            ->latest()->first()?->teacher;
+
+        return view('dashboard.payments.checkout', compact('payment', 'provider', 'gatewayUrl', 'teacher'));
     }
 
     // callback من البوابة (تحقق HMAC ثم تأكيد)

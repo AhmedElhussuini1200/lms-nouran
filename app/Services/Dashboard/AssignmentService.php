@@ -203,7 +203,12 @@ class AssignmentService
     protected function authorizeView(Assignment $assignment): void
     {
         $user = auth('admin')->user();
-        if ($user->type === 'admin' || $user->type === 'parent') {
+        if ($user->type === 'admin') {
+            return;
+        }
+        if ($user->type === 'parent') {
+            // ولي الأمر: صفوف أبنائه فقط
+            abort_unless(in_array($assignment->grade, allowedGrades($user) ?? []), 403, __('غير مصرح لك'));
             return;
         }
         if ($user->type === 'teacher') {

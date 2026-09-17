@@ -40,6 +40,22 @@ class Course extends Model
         return $this->hasMany(LiveMessage::class, 'course_id')->latest()->limit(50);
     }
 
+    // واجب الحصة + امتحان الحصة
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class, 'course_id');
+    }
+
+    public function exams()
+    {
+        return $this->hasMany(Exam::class, 'course_id');
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'course_id');
+    }
+
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');

@@ -14,7 +14,15 @@
             <div class="card-body p-0">
                 <div class="rounded-top overflow-hidden bg-dark">
                     <div class="ratio ratio-16x9">
-                        <iframe src="{{ $video->video_url }}" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" oncontextmenu="return false"></iframe>
+                        @if($video->embed_url)
+                        <iframe src="{{ $video->embed_url }}" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" oncontextmenu="return false"></iframe>
+                        @else
+                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-white p-5 text-center">
+                            <div class="fs-1">⚠️</div>
+                            <p class="mb-2">{{ __('رابط الفيديو غير صالح — تواصل مع المدرس لتحديثه') }}</p>
+                            <a href="{{ $video->video_url }}" target="_blank" class="btn btn-sm btn-light">{{ __('فتح الرابط الأصلي') }}</a>
+                        </div>
+                        @endif
                     </div>
                 </div>
                 <div class="p-7">

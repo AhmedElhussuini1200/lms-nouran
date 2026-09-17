@@ -32,4 +32,14 @@ class Video extends Model
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
+
+    public function getYoutubeIdAttribute(): ?string
+    {
+        return youtubeId($this->video_url);
+    }
+
+    public function getEmbedUrlAttribute(): ?string
+    {
+        return youtubeEmbed($this->video_url);
+    }
 }

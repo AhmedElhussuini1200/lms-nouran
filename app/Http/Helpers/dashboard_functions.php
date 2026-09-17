@@ -323,7 +323,8 @@ if (!function_exists('notifyStudentsByGrade')) {
 }
 
 if (!function_exists('brand')) {
-    // الهوية البصرية: تقرأ من جدول settings مع قيم افتراضية
+    // الهوية البصرية: لو الداخل مدرس وعنده هوية خاصة → المشروع كله باسمه
+    // غير كده: الهوية العامة من settings
     function brand($key, $default = null)
     {
         static $cache = null;
@@ -333,6 +334,22 @@ if (!function_exists('brand')) {
             } catch (\Throwable $e) {
                 $cache = [];
             }
+        }
+        try {
+            $me = auth('admin')->user();
+            if ($me && $me->type === 'teacher') {
+                $mine = [
+                    'site_name' => $me->brand_name ?: $me->name,
+                    'primary_color' => $me->brand_primary,
+                    'secondary_color' => $me->brand_secondary,
+                    'logo' => $me->brand_logo,
+                ];
+                if (! empty($mine[$key])) {
+                    return $mine[$key];
+                }
+                // لو المدرس مش مظبط لون → يقع على العام
+            }
+        } catch (\Throwable $e) {
         }
         $defaults = [
             'site_name' => 'منصة نوران التعليمية',
@@ -892,5 +909,57 @@ if (!function_exists('getAvatarInitial')) {
             $initial = mb_strtoupper($initial, 'UTF-8');
         }
         return ($initial);
+    }
+}
+
+if (!function_exists('allowedGrades')) {
+    // الصفوف المسموح للمستخدم رؤيتها: الطالب صفه فقط، ولي الأمر صفوف أبنائه، والباقي الكل (null)
+    function allowedGrades($user = null): ?array
+    {
+        $user = $user ?: auth('admin')->user();
+        if (! $user) {
+            return [];
+        }
+        if ($user->type === 'student') {
+            return $user->grade ? [$user->grade] : [];
+        }
+        if ($user->type === 'parent') {
+            return $user->students()->pluck('admins.grade')->filter()->unique()->values()->all();
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('youtubeId')) {
+    // يستخرج ID اليوتيوب (11 حرف) من أي صيغة رابط — أو null لو الرابط غير صالح
+    function youtubeId(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+        $patterns = [
+            '/youtube\.com\/watch\?.*v=([A-Za-z0-9_-]{11})/',
+            '/youtu\.be\/([A-Za-z0-9_-]{11})/',
+            '/youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{11})/',
+            '/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/',
+            '/youtube\.com\/live\/([A-Za-z0-9_-]{11})/',
+        ];
+        foreach ($patterns as $p) {
+            if (preg_match($p, $url, $m)) {
+                return $m[1];
+            }
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('youtubeEmbed')) {
+    function youtubeEmbed(?string $url): ?string
+    {
+        $id = youtubeId($url);
+
+        return $id ? 'https://www.youtube-nocookie.com/embed/' . $id . '?rel=0' : null;
     }
 }

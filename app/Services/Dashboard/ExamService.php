@@ -324,7 +324,12 @@ class ExamService
     protected function authorizeView(Exam $exam): void
     {
         $user = auth('admin')->user();
-        if ($user->type === 'admin' || $user->type === 'parent') {
+        if ($user->type === 'admin') {
+            return;
+        }
+        if ($user->type === 'parent') {
+            // ولي الأمر: صفوف أبنائه فقط
+            abort_unless(in_array($exam->grade, allowedGrades($user) ?? []), 403, __('غير مصرح لك'));
             return;
         }
         if ($user->type === 'teacher') {

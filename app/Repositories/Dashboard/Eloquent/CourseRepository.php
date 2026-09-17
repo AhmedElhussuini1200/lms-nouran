@@ -14,10 +14,12 @@ class CourseRepository implements CourseRepositoryInterface
 
         $query = Course::with('teacher:id,name')->orderBy('scheduled_at', 'desc');
 
-        if ($user && $user->type === 'student') {
-            // لو الطالب ملوش صف محدد → where grade null = مفيش نتائج (مش كل المحتوى)
-
-            $query->where('grade', $user->grade);
+        // قفل الصف: الطالب صفه فقط وولي الأمر صفوف أبنائه — يتجاهل أي grade في الرابط
+        $allowed = allowedGrades($user);
+        if ($allowed !== null) {
+            $query->whereIn('grade', $allowed ?: ['__none__']);
+        } elseif ($request->filled('grade') && $request->grade !== 'all') {
+            $query->where('grade', $request->grade);
         }
 
         if ($user && $user->type === 'teacher') {
@@ -27,9 +29,6 @@ class CourseRepository implements CourseRepositoryInterface
             }
         }
 
-        if ($request->filled('grade') && $request->grade !== 'all') {
-            $query->where('grade', $request->grade);
-        }
 
         // فلتر المدرس (للأدمن) والمادة — ديناميكية تعدد المدرسين
         if ($request->filled('teacher') && $request->teacher !== 'all') {

@@ -50,10 +50,16 @@ class PaymentService
             'amount' => ['required', 'numeric', 'min:0'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
             'method' => ['nullable', 'in:cash,vodafone,instapay,card'],
+            'payer_name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);
         $data['paid_amount'] = $data['paid_amount'] ?? 0;
         $data['created_by'] = auth('admin')->id();
+        // لو في مبلغ مدفوع مع الإنشاء: الدافع هو منشئ الفاتورة ما لم يُذكر اسم آخر
+        if ((float) $data['paid_amount'] > 0 && empty($data['paid_by'] ?? null)) {
+            $data['paid_by'] = auth('admin')->id();
+            $data['payer_name'] = $data['payer_name'] ?? auth('admin')->user()->name;
+        }
 
         // منع الفاتورة المكررة برسالة واضحة بدل خطأ SQL
         $exists = Payment::where('student_id', $data['student_id'])->where('month', $data['month'])->first();
@@ -94,8 +100,20 @@ class PaymentService
             'amount' => ['required', 'numeric', 'min:0'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
             'method' => ['nullable', 'in:cash,vodafone,instapay,card'],
+            'payer_name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        // الدافع: اللي زوّد المدفوع — لو ولي أمر/طالب دفع بنفسه يتسجل هو
+        $oldPaid = (float) $payment->paid_amount;
+        $newPaid = (float) ($data['paid_amount'] ?? $oldPaid);
+        $me = auth('admin')->user();
+        if ($newPaid > $oldPaid && in_array($me->type, ['parent', 'student'])) {
+            $data['paid_by'] = $me->id;
+            $data['payer_name'] = $me->name;
+        } elseif (! empty($data['payer_name']) && empty($payment->paid_by)) {
+            $data['paid_by'] = $me->id;
+        }
 
         $this->paymentRepository->update($data, $payment);
         $this->notifyPayment($payment->fresh(), __('تحديث مدفوعات'));

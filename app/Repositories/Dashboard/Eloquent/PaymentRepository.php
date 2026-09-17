@@ -12,7 +12,7 @@ class PaymentRepository implements PaymentRepositoryInterface
     public function index(Request $request)
     {
         $user = auth('admin')->user();
-        $query = Payment::with(['student:id,name,grade', 'status'])->orderBy('month', 'desc');
+        $query = Payment::with(['student:id,name,grade', 'payer:id,name,type', 'status'])->orderBy('month', 'desc');
 
         if ($user && $user->type === 'student') {
             $query->where('student_id', $user->id);

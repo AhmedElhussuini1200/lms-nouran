@@ -48,9 +48,13 @@ class OnlinePaymentController extends Controller
     public function confirm(Request $request, Payment $payment, WhatsappService $whatsapp)
     {
         $request->validate(['paid_amount' => ['required', 'numeric', 'min:1']]);
+        $me = auth('admin')->user();
         $payment->update([
             'paid_amount' => $payment->paid_amount + $request->paid_amount,
             'paid_at' => now(),
+            // تسجيل الدافع الفعلي (ولي الأمر غالباً) — الفاتورة تفضل باسم الطالب
+            'paid_by' => $me->id,
+            'payer_name' => $me->name,
         ]);
 
         // عمولة المدرس على التحصيل

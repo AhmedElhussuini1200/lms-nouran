@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Payment extends Model
 {
     protected $fillable = [
-        'student_id', 'month', 'amount', 'paid_amount',
+        'student_id', 'paid_by', 'payer_name', 'month', 'amount', 'paid_amount',
         'status_id', 'method', 'notes', 'created_by',
     ];
 
@@ -19,6 +19,21 @@ class Payment extends Model
     public function student()
     {
         return $this->belongsTo(Admin::class, 'student_id');
+    }
+
+    // اللي دفع فعلاً (قد يكون ولي الأمر) — الفاتورة تفضل باسم الطالب
+    public function payer()
+    {
+        return $this->belongsTo(Admin::class, 'paid_by');
+    }
+
+    public function getPayerLabelAttribute(): string
+    {
+        if ($this->payer) {
+            return $this->payer->name . ($this->payer->type === 'parent' ? ' (' . __('ولي أمر') . ')' : '');
+        }
+
+        return $this->payer_name ?: '—';
     }
 
     public function status()

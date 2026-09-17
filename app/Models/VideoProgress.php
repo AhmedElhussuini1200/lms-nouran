@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class VideoProgress extends Model
 {
-    protected $fillable = ['video_id', 'student_id', 'watched_seconds', 'percent', 'completed'];
+    protected $table = 'video_progresses';    protected $fillable = ['video_id', 'student_id', 'watched_seconds', 'percent', 'completed'];
 
     public function video()
     {

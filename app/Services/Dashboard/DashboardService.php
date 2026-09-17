@@ -9,16 +9,19 @@ use App\Models\Admin;
 use App\Models\Assignment;
 use Carbon\Carbon;
 use App\Repositories\Dashboard\Contracts\DashboardRepositoryInterface;
+use App\Services\InsightService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardService
 {
     protected $dashboardRepository;
+    protected $insights;
 
-    public function __construct(DashboardRepositoryInterface $dashboardRepository)
+    public function __construct(DashboardRepositoryInterface $dashboardRepository, InsightService $insights)
     {
         $this->dashboardRepository = $dashboardRepository;
+        $this->insights = $insights;
     }
 
 
@@ -105,48 +108,44 @@ class DashboardService
             case 'student':
                 $grade = $user->grade;
                 $submittedAssignmentIds = \App\Models\AssignmentSubmission::where('student_id', $user->id)->pluck('assignment_id');
-                // نقاط التميز: 10 لكل تسليم واجب + 20 لكل امتحان مسلم + مجموع المشاهدات كنقاط تشجيعية
-                $submissionsCount = \App\Models\AssignmentSubmission::where('student_id', $user->id)->count();
-                $examsTaken = \App\Models\ExamResult::where('student_id', $user->id)->count();
-                // أيام الالتزام: عدد الأيام المميزة اللي سلم فيها حاجة آخر 30 يوم
-                $streak = \App\Models\AssignmentSubmission::where('student_id', $user->id)
-                    ->where('submitted_at', '>=', now()->subDays(30))
-                    ->distinct()->count(\Illuminate\Support\Facades\DB::raw('DATE(submitted_at)'));
+                $insight = $this->insights->profile($user->id);
                 return view('dashboard.student', [
                     'stats' => [
                         'courses' => Course::where('grade', $grade)->count(),
                         'assignments' => Assignment::where('grade', $grade)->count(),
                         'exams' => Exam::where('grade', $grade)->count(),
                         'videos' => Video::where('grade', $grade)->count(),
-                        'points' => $submissionsCount * 10 + $examsTaken * 20,
-                        'streak' => $streak,
+                        'points' => $insight['points'],
+                        'streak' => \App\Models\AssignmentSubmission::where('student_id', $user->id)
+                            ->where('submitted_at', '>=', now()->subDays(30))
+                            ->distinct()->count(\Illuminate\Support\Facades\DB::raw('DATE(submitted_at)')),
                     ],
+                    'insight' => $insight,
                     'upcomingCourses' => Course::where('grade', $grade)->where('scheduled_at', '>=', now())->orderBy('scheduled_at')->limit(5)->get(),
                     'pendingAssignments' => Assignment::where('grade', $grade)->whereNotIn('id', $submittedAssignmentIds)->orderBy('due_date')->limit(5)->get(),
                     'overdueAssignments' => Assignment::where('grade', $grade)->whereNotIn('id', $submittedAssignmentIds)->where('due_date', '<', now())->count(),
                     'upcomingExams' => Exam::where('grade', $grade)->where('exam_date', '>=', now())->orderBy('exam_date')->limit(3)->get(),
                     'recentVideos' => Video::where('grade', $grade)->latest()->limit(6)->get(),
+                    'myPayments' => \App\Models\Payment::where('student_id', $user->id)->orderBy('month', 'desc')->limit(3)->get(),
+                    'myCertificates' => \App\Models\Certificate::where('student_id', $user->id)->latest()->limit(3)->get(),
                 ]);
             case 'parent':
-                $children = $user->students()->with([])->get();
+                $children = $user->students()->get();
                 $childIds = $children->pluck('id');
-                $grades = $children->pluck('grade')->filter()->unique()->values();
-                $progress = [];
+                $profiles = [];
                 foreach ($children as $child) {
-                    $avg = \App\Models\ExamResult::where('student_id', $child->id)->avg('marks_obtained');
-                    $doneIds = \App\Models\AssignmentSubmission::where('student_id', $child->id)->pluck('assignment_id');
-                    $missing = Assignment::where('grade', $child->grade)->whereNotIn('id', $doneIds)->orderBy('due_date')->limit(5)->get();
-                    $progress[] = ['student' => $child, 'average' => $avg ? round($avg, 1) : null, 'missing' => $missing];
+                    $profiles[] = $this->insights->profile($child->id);
                 }
                 return view('dashboard.parent', [
                     'stats' => [
                         'students' => $children->count(),
-                        'total_assignments' => Assignment::whereIn('grade', $grades)->count(),
-                        'total_exams' => Exam::whereIn('grade', $grades)->count(),
-                        'average_marks' => round(\App\Models\ExamResult::whereIn('student_id', $childIds)->avg('marks_obtained') ?? 0, 1),
+                        'due' => (float) \App\Models\Payment::whereIn('student_id', $childIds)->get()->sum(fn ($p) => $p->remaining),
+                        'avg' => count($profiles) ? round(collect($profiles)->avg(fn ($p) => $p['avg'] ?? 0), 1) : 0,
+                        'alerts' => collect($profiles)->where('risk', 'high')->count(),
                     ],
                     'children' => $children,
-                    'studentProgress' => $progress,
+                    'profiles' => $profiles,
+                    'invoices' => \App\Models\Payment::with(['student:id,name', 'payer:id,name,type'])->whereIn('student_id', $childIds)->orderBy('month', 'desc')->limit(10)->get(),
                 ]);
             default:
                 Auth::guard('admin')->logout();

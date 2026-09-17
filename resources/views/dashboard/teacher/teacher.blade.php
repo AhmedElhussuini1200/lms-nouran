@@ -119,7 +119,7 @@
     </div>
 
     <!-- Recent Assignments -->
-    <div class="bg-white shadow rounded-lg">
+    <div class="bg-white shadow rounded-lg mb-6">
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">الواجبات الأخيرة</h3>
             <div class="space-y-4">
@@ -136,6 +136,25 @@
             </div>
         </div>
     </div>
+
+    <!-- Class intelligence -->
+    <section class="sec">
+        <div class="sec-head"><span class="sec-head__bar"></span>
+            <div><h2 class="sec-head__title">🧠 {{ __('ذكاء الفصل') }}</h2><p class="sec-head__desc">{{ __('المتعثرون وأضعف المواد في صفوفك') }}</p></div>
+            <a href="{{ route('admin.analytics.risk') }}" class="sec-head__aside btn btn-sm btn-light-warning">{{ __('كل المتعثرين') }}</a>
+        </div>
+        <div class="row g-5">
+            <div class="col-xl-6"><div class="card card-flush h-100"><div class="card-header"><h3 class="card-title">⚠️ {{ __('طلاب يحتاجون تدخل') }}</h3></div>
+                <div class="card-body py-4">@forelse($atRisk ?? [] as $r)
+                <div class="rec"><span class="rec__icon">🔴</span><span class="rec__txt">{{ $r['student']->name }} <span class="text-muted">({{ __($r['student']->grade ?? '') }} — {{ $r['avg'] ?? '—' }}%)</span><span class="d-block fs-8 text-muted">{{ implode(' • ', $r['reasons'] ?? []) }}</span></span></div>
+                @empty<p class="text-muted mb-0">{{ __('لا طلاب في خطر حالياً') }}</p>@endforelse</div></div></div>
+            <div class="col-xl-6"><div class="card card-flush h-100"><div class="card-header"><h3 class="card-title">📉 {{ __('أضعف المواد') }}</h3></div>
+                <div class="card-body py-4">@forelse($weakSubjects ?? [] as $m)
+                <div class="mastery"><div class="mastery__top"><span class="fw-bold">{{ $m['subject'] }}</span><span class="text-muted">{{ $m['avg'] }}%</span></div>
+                <div class="mastery__bar"><span style="width:{{ min(100, $m['avg']) }}%"></span></div></div>
+                @empty<p class="text-muted mb-0">{{ __('لا بيانات كافية بعد') }}</p>@endforelse</div></div></div>
+        </div>
+    </section>
 </div>
 @endsection
 @push('scripts')

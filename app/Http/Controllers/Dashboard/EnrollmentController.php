@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
+use App\Services\Dashboard\EnrollmentService;
 use Illuminate\Http\Request;
 
 class EnrollmentController extends Controller
 {
+    public function __construct(protected EnrollmentService $enrollments) {}
+
     // كارت اختيار المدرس (هتحضر عند مين؟)
     public function picker()
     {
         $user = auth('admin')->user();
         abort_unless($user->type === 'student', 403);
-        $teachers = $user->enrolledTeachers()->orderBy('name')->get();
+        $teachers = $this->enrollments->teachersFor($user);
         if ($teachers->count() <= 1) {
             if ($teachers->count() === 1) {
                 session(['current_teacher_id' => $teachers->first()->id]);
@@ -31,8 +33,7 @@ class EnrollmentController extends Controller
         $user = auth('admin')->user();
         abort_unless($user->type === 'student', 403);
         $request->validate(['teacher_id' => ['required', 'exists:admins,id']]);
-        abort_unless($user->enrolledTeachers()->where('admins.id', $request->teacher_id)->exists(), 403);
-        session(['current_teacher_id' => (int) $request->teacher_id]);
+        $this->enrollments->choose($user, (int) $request->teacher_id);
 
         if ($request->expectsJson()) {
             return response()->json(['message' => __('تم الاختيار'), 'url' => route('admin.index')]);
@@ -44,7 +45,7 @@ class EnrollmentController extends Controller
     // تغيير المادة (يرجع للكارت)
     public function switch()
     {
-        session()->forget('current_teacher_id');
+        $this->enrollments->reset();
 
         return redirect()->route('admin.enroll.pick');
     }

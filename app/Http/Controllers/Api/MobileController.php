@@ -43,7 +43,7 @@ class MobileController extends Controller
             $q->where('grade', $u->grade);
         }
 
-        return response()->json($q->paginate(20));
+        return \App\Http\Resources\Api\CourseResource::collection($q->paginate(20));
     }
 
     public function videos(Request $request)
@@ -54,7 +54,7 @@ class MobileController extends Controller
             $q->where('grade', $u->grade);
         }
 
-        return response()->json($q->paginate(20));
+        return \App\Http\Resources\Api\VideoResource::collection($q->paginate(20));
     }
 
     public function exams(Request $request)
@@ -65,7 +65,7 @@ class MobileController extends Controller
             $q->where('grade', $u->grade);
         }
 
-        return response()->json($q->paginate(20));
+        return \App\Http\Resources\Api\ExamResource::collection($q->paginate(20));
     }
 
     public function submitExam(Request $request, Exam $exam)
@@ -107,7 +107,7 @@ class MobileController extends Controller
             $q->where('student_id', $u->id);
         }
 
-        return response()->json($q->paginate(20));
+        return \App\Http\Resources\Api\PaymentResource::collection($q->paginate(20));
     }
 
     public function leaderboard(Request $request)

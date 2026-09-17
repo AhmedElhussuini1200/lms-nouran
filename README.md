@@ -1,59 +1,65 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# منصة نوران التعليمية — LMS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+منصة تعليمية متكاملة للثانوية العامة بفكر **الأكاديميات الخاصة**: كل مدرس بهويته، كل حصة مربوطة بمحتواها وفلوسها، ودورة دفع كاملة بإيصال واعتماد.
 
-## About Laravel
+## الفكرة في سطر
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> طالب مسجل مع مدرس (أو أكتر) → يختار "هحضر عند مين" → محتواه وفلوسه ومتابعته مظبوطين عليه → ولي الأمر شايف ودافع → المدرس محصّل ومعتمد.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## الأدوار
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| الدور | بيشوف إيه |
+|---|---|
+| **أدمن** | كل حاجة: مستخدمين، محتوى، فواتير، تقارير، سلة مهملات |
+| **مدرس** | حصصه ومحتواه فقط + هويته الخاصة + باقته الشهرية + محفظته بالعمولات |
+| **طالب** | صفه فقط + مدرسه المختار + درجاته + حضوره + فواتيره + شهاداته + الصدارة |
+| **ولي أمر** | أبنائه فقط: المستوى، المخاطر، الدرجات، الغياب، الفواتير (ويدفع لابنه) |
 
-## Learning Laravel
+## أهم المميزات
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **هوية لكل مدرس**: اسم "منصة + اسم المدرس"، لوجو، ألوان — والموقع كله بيتلون بيه.
+- **كارت اختيار المدرس**: الطالب المسجل مع أكتر من مدرس بيختار هيحضر عند مين، والمحتوى بيتفلتر عليه.
+- **الحصة مركز كل حاجة**: واجبها + امتحانها + حضورها (QR) + فواتير شهرها.
+- **امتحانات ذكية**: مؤقت، خلط، محاولات محدودة، منع غش، تصحيح تلقائي + مقالي، شهادة تلقائية عند النجاح.
+- **دورة فلوس مقفولة**: باقة شهرية (حصص × سعر) → توليد فواتير تلقائي → دفع + إيصال إجباري + OTP واتساب → اعتماد/رفض من المدرس → إيصال PDF + الدافع متسجل.
+- **ذكاء**: ملف مهارة لكل طالب (إتقان المواد، الاتجاه، دقة الاختيارات)، توصيات مرتبة، كشف متعثرين بأسباب، تقرير ولي الأمر PDF.
+- **مساعد AI**: إجابات من المنهج + توليد quiz + تصحيح مقالي (يشتغل محلياً ويتعمق مع `OPENAI_API_KEY`).
+- **لايف + شات** (Reverb events)، **واتساب** (تنبيهات + استلام واجبات Bot)، **تقارير** Excel/PDF، **بنك أسئلة**، **كوبونات وإحالات ومحافظ**، **Mobile API** كامل (Sanctum + Resources) — انظر `docs/api.md`.
+- **سلامة بيانات**: حذف ناعم (soft) لكل المستخدمين + حذف متسلسل لولي الأمر اليتيم + استرجاع متسلسل + ولي الأمر لازم طالب.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## التشغيل
 
-## Laravel Sponsors
+```bash
+composer install && npm install
+cp .env.example .env && php artisan key:generate
+php artisan migrate --force
+php artisan storage:link
+php artisan serve
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### مجدول (scheduler)
+```bash
+php artisan schedule:run
+```
+- `lms:remind` يومياً 7ص (حصص اليوم + المتأخرات واتساب)
+- `lms:invoices` يوم 1 شهرياً 6ص (فواتير من باقات المدرسين)
 
-### Premium Partners
+## مفاتيح اختيارية (.env)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+| المفتاح | ليه |
+|---|---|
+| `OPENAI_API_KEY` | إجابات AI أعمق |
+| `PAYMOB_API_KEY` / `FAWRY_API_KEY` + `*_MERCHANT/HMAC` | دفع حقيقي بدل التجريبي |
+| `WHATSAPP_*` | بوابة الواتساب |
+| كود OTP التجريبي | `123456` (يتغير للإنتاج) |
 
-## Contributing
+## الاختبارات
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan test --filter=FamilyIntegrityTest
+php artisan test --filter=HelpersTest
+```
 
-## Code of Conduct
+## البنية
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Controller رفيع → Service → Repository → Model + Policies + Services متخصصة (`InsightService`، `PaymentCheckoutService`...) — انظر `ARCHITECTURE.md`.

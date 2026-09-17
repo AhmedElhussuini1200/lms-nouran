@@ -23,6 +23,7 @@ class UpdateAssignmentRequest extends FormRequest
             'due_date' => ['nullable', 'date'],
             'total_marks' => ['nullable', 'numeric', 'min:0'],
             'file' => ['nullable', 'file', 'max:10240'],
+            'course_id' => ['nullable', 'exists:courses,id'],
         ];
     }
 }

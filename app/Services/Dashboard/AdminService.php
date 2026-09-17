@@ -95,8 +95,9 @@ class AdminService
         $types = ['admin' => __('إدمن'), 'teacher' => __('مدرس'), 'student' => __('طالب'), 'parent' => __('ولي أمر')];
         $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
         $students = $admin->type === 'parent' ? Admin::where('type', 'student')->orderBy('name')->get(['id', 'name', 'grade']) : collect();
+        $teachers = $admin->type === 'student' ? Admin::where('type', 'teacher')->orderBy('name')->get(['id', 'name', 'subject']) : collect();
 
-        return view('dashboard.admin.admins.edit', compact('admin', 'roles', 'types', 'grades', 'students'));
+        return view('dashboard.admin.admins.edit', compact('admin', 'roles', 'types', 'grades', 'students', 'teachers'));
     }
 
     public function update($data, $admin)
@@ -109,6 +110,12 @@ class AdminService
         if ($admin->type === 'parent' && array_key_exists('children', $data)) {
             $admin->students()->sync($data['children'] ?? []);
             unset($data['children']);
+        }
+
+        // تسجيل الطالب مع المدرسين (المواد)
+        if ($admin->type === 'student' && array_key_exists('teachers', $data)) {
+            $admin->enrolledTeachers()->sync($data['teachers'] ?? []);
+            unset($data['teachers']);
         }
 
         $this->adminRepository->update($data, $admin);

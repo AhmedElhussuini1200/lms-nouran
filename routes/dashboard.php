@@ -28,6 +28,11 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     // لوحة التحكم الرئيسية حسب نوع المستخدم (admin/teacher/student/parent)
     Route::get('/', [DashboardController::class, 'index'])->name('index');
 
+    // اختيار المدرس عند الدخول (هتحضر عند مين؟)
+    Route::get('pick-teacher', [\App\Http\Controllers\Dashboard\EnrollmentController::class, 'picker'])->name('enroll.pick');
+    Route::post('pick-teacher', [\App\Http\Controllers\Dashboard\EnrollmentController::class, 'choose'])->name('enroll.choose');
+    Route::get('switch-teacher', [\App\Http\Controllers\Dashboard\EnrollmentController::class, 'switch'])->name('enroll.switch');
+
     /** ==================== LMS (Repository Pattern + owns middleware) =================== **/
     // العزل على مستوى الراوت: كل مدرس يشوف حاجته بس (AdminService-style guards تبقى كحماية إضافية)
     Route::resource('videos', VideoController::class)->middleware('owns');
@@ -93,6 +98,7 @@ Route::prefix('dashboard')->name('admin.')->middleware(['auth:admin'])->group(fu
     Route::get('branding', [BrandingController::class, 'index'])->name('branding.index');
     Route::put('branding', [BrandingController::class, 'update'])->name('branding.update');
     Route::get('payments/monthly-pdf', [PaymentController::class, 'monthlyPdf'])->name('payments.monthly-pdf');
+    Route::post('payments/generate', [PaymentController::class, 'generate'])->name('payments.generate');
     Route::resource('payments', PaymentController::class)->except(['show']);
     Route::get('statuses', [StatusController::class, 'index'])->name('statuses.index');
     Route::put('statuses/{status}', [StatusController::class, 'update'])->name('statuses.update');

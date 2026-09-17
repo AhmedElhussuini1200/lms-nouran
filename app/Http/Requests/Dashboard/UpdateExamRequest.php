@@ -23,6 +23,7 @@ class UpdateExamRequest extends FormRequest
             'exam_date' => ['nullable', 'date'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
             'total_marks' => ['nullable', 'numeric', 'min:0'],
+            'course_id' => ['nullable', 'exists:courses,id'],
             'shuffle_questions' => ['nullable', 'boolean'],
             'max_attempts' => ['nullable', 'integer', 'min:1', 'max:10'],
             'passing_marks' => ['nullable', 'numeric', 'min:0'],

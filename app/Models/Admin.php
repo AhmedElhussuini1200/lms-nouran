@@ -122,6 +122,17 @@ class Admin extends Authenticatable
         return $this->belongsToMany(Admin::class, 'student_parent', 'student_id', 'parent_id');
     }
 
+    // تسجيل الطالب مع المدرسين (المواد) — غير علاقة الأبناء
+    public function enrolledTeachers()
+    {
+        return $this->belongsToMany(Admin::class, 'enrollments', 'student_id', 'teacher_id')->withTimestamps();
+    }
+
+    public function enrolledStudents()
+    {
+        return $this->belongsToMany(Admin::class, 'enrollments', 'teacher_id', 'student_id')->withTimestamps();
+    }
+
     // Helper methods
     public function isTeacher()
     {

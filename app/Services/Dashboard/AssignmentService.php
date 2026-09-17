@@ -36,14 +36,16 @@ class AssignmentService
     public function create()
     {
         $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
+        $courses = $this->myCourses();
 
-        return view('dashboard.assignments.create', compact('grades'));
+        return view('dashboard.assignments.create', compact('grades', 'courses'));
     }
 
     public function store(StoreAssignmentRequest $request)
     {
         $data = $request->validated();
         $data['teacher_id'] = auth('admin')->id();
+        $data = $this->applyCourse($data);
 
         if ($request->hasFile('file')) {
             $data['file_path'] = 'storage/' . $request->file('file')->store('assignments', 'public');
@@ -77,14 +79,16 @@ class AssignmentService
     {
         $this->authorizeOwner($assignment);
         $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
+        $courses = $this->myCourses();
 
-        return view('dashboard.assignments.edit', compact('assignment', 'grades'));
+        return view('dashboard.assignments.edit', compact('assignment', 'grades', 'courses'));
     }
 
     public function update(UpdateAssignmentRequest $request, Assignment $assignment)
     {
         $this->authorizeOwner($assignment);
         $data = $request->validated();
+        $data = $this->applyCourse($data);
 
         if ($request->hasFile('file')) {
             $data['file_path'] = 'storage/' . $request->file('file')->store('assignments', 'public');
@@ -198,6 +202,33 @@ class AssignmentService
             return;
         }
         abort_if($assignment->teacher_id !== $user->id, 403, __('غير مصرح لك'));
+    }
+
+    protected function myCourses()
+    {
+        $user = auth('admin')->user();
+        $q = \App\Models\Course::orderBy('scheduled_at', 'desc');
+        if ($user->type === 'teacher') {
+            $q->where('teacher_id', $user->id);
+        }
+
+        return $q->limit(100)->get(['id', 'title', 'grade', 'scheduled_at']);
+    }
+
+    // ربط الواجب بالحصة: ملكية + وراثة الصف من الحصة
+    protected function applyCourse(array $data): array
+    {
+        if (empty($data['course_id'])) {
+            return $data;
+        }
+        $course = \App\Models\Course::findOrFail($data['course_id']);
+        $user = auth('admin')->user();
+        if ($user->type === 'teacher') {
+            abort_if($course->teacher_id !== $user->id, 403, __('غير مصرح لك'));
+        }
+        $data['grade'] = $course->grade;
+
+        return $data;
     }
 
     protected function authorizeView(Assignment $assignment): void

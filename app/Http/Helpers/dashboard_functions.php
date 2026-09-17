@@ -963,3 +963,28 @@ if (!function_exists('youtubeEmbed')) {
         return $id ? 'https://www.youtube-nocookie.com/embed/' . $id . '?rel=0' : null;
     }
 }
+
+if (!function_exists('currentTeacher')) {
+    // المدرس المختار حالياً للطالب (من كارت الاختيار) — أو الوحيد تلقائياً — أو null
+    function currentTeacher($user = null)
+    {
+        $user = $user ?: auth('admin')->user();
+        if (! $user || $user->type !== 'student') {
+            return null;
+        }
+        if (session()->has('current_teacher_id')) {
+            $t = \App\Models\Admin::where('type', 'teacher')->find(session('current_teacher_id'));
+            if ($t && $user->enrolledTeachers()->where('admins.id', $t->id)->exists()) {
+                return $t;
+            }
+            session()->forget('current_teacher_id');
+        }
+        $teachers = $user->enrolledTeachers()->get();
+        if ($teachers->count() === 1) {
+            session(['current_teacher_id' => $teachers->first()->id]);
+            return $teachers->first();
+        }
+
+        return null;
+    }
+}

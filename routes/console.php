@@ -12,3 +12,6 @@ Artisan::command('inspire', function () {
 
 // تذكيرات يومية 7 صباحاً: حصص اليوم + أقساط متأخرة
 Schedule::command('lms:remind')->dailyAt('07:00');
+
+// فواتير الشهر الجديد يوم 1 الساعة 6 صباحاً من باقات المدرسين
+Schedule::command('lms:invoices')->monthlyOn(1, '06:00');

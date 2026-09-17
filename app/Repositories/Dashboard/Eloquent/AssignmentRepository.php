@@ -18,6 +18,10 @@ class AssignmentRepository implements AssignmentRepositoryInterface
         $allowed = allowedGrades($user);
         if ($allowed !== null) {
             $query->whereIn('grade', $allowed ?: ['__none__']);
+            // لو الطالب مختار مدرس (كارت الدخول) → محتوى المدرس ده بس
+            if ($user->type === 'student' && session()->has('current_teacher_id')) {
+                $query->where('teacher_id', session('current_teacher_id'));
+            }
         } elseif ($request->filled('grade') && $request->grade !== 'all') {
             $query->where('grade', $request->grade);
         }

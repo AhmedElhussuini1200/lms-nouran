@@ -33,6 +33,13 @@
 @foreach($students as $s)<option value="{{ $s->id }}" {{ $admin->students->contains($s->id) ? 'selected' : '' }}>{{ $s->name }} - {{ __($s->grade ?? '') }}</option>@endforeach
 </select></div>
 @endif
+@if($admin->type === 'student')
+<div class="col-12"><label class="form-label">{{ __('مسجل مع المدرسين (المواد)') }}</label>
+<select data-placeholder="{{ __('اختار المدرسين') }}" data-control="select2" name="teachers[]" class="form-select" multiple size="5">
+@foreach($teachers as $t)<option value="{{ $t->id }}" {{ $admin->enrolledTeachers->contains($t->id) ? 'selected' : '' }}>{{ $t->name }}{{ $t->subject ? ' - '.$t->subject : '' }}</option>@endforeach
+</select>
+<p class="text-muted fs-8 mt-1">{{ __('لو أكتر من مدرس: الطالب هيختار هيحضر عند مين وهو داخل') }}</p></div>
+@endif
 </div></div>
 <div class="card-footer d-flex justify-content-end"><button class="btn btn-primary">{{ __('حفظ التعديلات') }}</button></div>
 </form></div>

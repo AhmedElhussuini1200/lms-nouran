@@ -57,4 +57,14 @@ class PaymentController extends Controller
         $this->authorize('view_payments');
         return $this->service->monthlyPdf($request);
     }
+
+    public function generate(Request $request)
+    {
+        $this->authorize('create_payments');
+        $request->validate(['month' => ['nullable', 'regex:/^\d{4}-\d{2}$/']]);
+        \Artisan::call('lms:invoices', ['month' => $request->month ?: date('Y-m')]);
+
+        return redirect()->route('admin.payments.index', ['month' => $request->month ?: date('Y-m')])
+            ->with('success', trim(\Artisan::output()));
+    }
 }

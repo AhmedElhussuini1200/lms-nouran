@@ -5,6 +5,7 @@
 <div class="card-body"><div class="row g-6">
 <div class="col-md-8"><label class="form-label required">{{ __('العنوان') }}</label><input type="text" name="title" class="form-control" required /></div>
 <div class="col-md-4"><label class="form-label required">{{ __('الصف') }}</label><select name="grade" data-control="select2" data-placeholder="الصف الدراسي" class="form-select" required>@foreach($grades as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
+<div class="col-md-4"><label class="form-label">{{ __('الحصة (اختياري)') }}</label><select name="course_id" data-control="select2" data-placeholder="{{ __('بدون حصة') }}" class="form-select"><option value="">{{ __('بدون حصة') }}</option>@foreach($courses ?? [] as $c)<option value="{{ $c->id }}" {{ request('course_id')==$c->id?'selected':'' }}>{{ $c->title }} ({{ __($c->grade) }})</option>@endforeach</select></div>
 <div class="col-md-4"><label class="form-label">{{ __('المادة') }}</label><input type="text" name="subject" class="form-control" value="{{ old('subject') }}" placeholder="فيزياء" /></div>
 <div class="col-md-4"><label class="form-label">{{ __('موعد الامتحان') }}</label><input type="datetime-local" name="exam_date" class="form-control" /></div>
 <div class="col-md-4"><label class="form-label">{{ __('المدة (دقيقة)') }}</label><input type="number" name="duration_minutes" class="form-control" min="1" /></div>

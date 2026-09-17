@@ -33,6 +33,8 @@ class UpdateAdminRequest extends FormRequest
             'roles.*' => ['exists:roles,id'],
             'children' => ['nullable', 'array'],
             'children.*' => ['exists:admins,id'],
+            'teachers' => ['nullable', 'array'],
+            'teachers.*' => ['exists:admins,id'],
         ];
     }
 }

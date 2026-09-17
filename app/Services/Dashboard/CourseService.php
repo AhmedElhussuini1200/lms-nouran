@@ -54,8 +54,14 @@ class CourseService
     {
         $this->authorizeView($course);
         $course = $this->courseRepository->show($course);
+        $course->load(['assignments:id,course_id,title,due_date', 'exams:id,course_id,title,exam_date']);
+        $att = \App\Models\Attendance::where('course_id', $course->id);
+        $attStats = ['present' => (clone $att)->where('status', 'present')->count(), 'absent' => (clone $att)->where('status', 'absent')->count(), 'late' => (clone $att)->where('status', 'late')->count()];
+        // فواتير شهر الحصة لطلبة نفس الصف (سياق الفلوس)
+        $month = $course->scheduled_at?->format('Y-m');
+        $invoices = $month ? \App\Models\Payment::with('student:id,name')->where('month', $month)->whereHas('student', fn ($q) => $q->where('grade', $course->grade))->get() : collect();
 
-        return view('dashboard.courses.show', compact('course'));
+        return view('dashboard.courses.show', compact('course', 'attStats', 'invoices', 'month'));
     }
 
     public function edit(Course $course)

@@ -18,6 +18,9 @@
         </p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
+        @if(!empty($teacher))
+        <a href="{{ route('admin.enroll.switch') }}" class="btn btn-light btn-sm" title="{{ __('تغيير المادة') }}">👨‍🏫 {{ $teacher->brand_name ?? $teacher->name }} ⇄</a>
+        @endif
         <a href="{{ route('admin.assignments.index') }}" class="btn btn-light btn-sm">{{ __('واجباتي') }}</a>
         <a href="{{ route('admin.videos.index') }}" class="btn btn-light btn-sm">{{ __('أكمل الدروس') }}</a>
         <a href="{{ route('admin.leaderboard') }}" class="btn btn-warning btn-sm">🏆 {{ __('الصدارة') }}</a>

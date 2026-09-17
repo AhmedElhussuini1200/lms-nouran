@@ -42,14 +42,16 @@ class ExamService
     public function create()
     {
         $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
+        $courses = $this->myCourses();
 
-        return view('dashboard.exams.create', compact('grades'));
+        return view('dashboard.exams.create', compact('grades', 'courses'));
     }
 
     public function store(StoreExamRequest $request)
     {
         $data = $request->validated();
         $data['teacher_id'] = auth('admin')->id();
+        $data = $this->applyCourse($data);
 
         $exam = $this->examRepository->store($data);
 
@@ -85,14 +87,15 @@ class ExamService
     {
         $this->authorizeOwner($exam);
         $grades = ['1_secondary' => __('الأول الثانوي'), '2_secondary' => __('الثاني الثانوي'), '3_secondary' => __('الثالث الثانوي')];
+        $courses = $this->myCourses();
 
-        return view('dashboard.exams.edit', compact('exam', 'grades'));
+        return view('dashboard.exams.edit', compact('exam', 'grades', 'courses'));
     }
 
     public function update(UpdateExamRequest $request, Exam $exam)
     {
         $this->authorizeOwner($exam);
-        $this->examRepository->update($request->validated(), $exam);
+        $this->examRepository->update($this->applyCourse($request->validated()), $exam);
 
         if ($request->ajax()) {
             return response()->json(['message' => __('تم تحديث الامتحان بنجاح'), 'url' => route('admin.exams.show', $exam->id)]);
@@ -319,6 +322,33 @@ class ExamService
             return;
         }
         abort_if($exam->teacher_id !== $user->id, 403, __('غير مصرح لك'));
+    }
+
+    protected function myCourses()
+    {
+        $user = auth('admin')->user();
+        $q = \App\Models\Course::orderBy('scheduled_at', 'desc');
+        if ($user->type === 'teacher') {
+            $q->where('teacher_id', $user->id);
+        }
+
+        return $q->limit(100)->get(['id', 'title', 'grade', 'scheduled_at']);
+    }
+
+    // ربط الامتحان بالحصة: ملكية + وراثة الصف من الحصة
+    protected function applyCourse(array $data): array
+    {
+        if (empty($data['course_id'])) {
+            return $data;
+        }
+        $course = \App\Models\Course::findOrFail($data['course_id']);
+        $user = auth('admin')->user();
+        if ($user->type === 'teacher') {
+            abort_if($course->teacher_id !== $user->id, 403, __('غير مصرح لك'));
+        }
+        $data['grade'] = $course->grade;
+
+        return $data;
     }
 
     protected function authorizeView(Exam $exam): void

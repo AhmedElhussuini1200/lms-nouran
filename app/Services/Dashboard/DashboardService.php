@@ -126,10 +126,17 @@ class DashboardService
                     'weakSubjects' => $weakSubjects,
                 ]);
             case 'student':
+                // مسجل مع أكتر من مدرس ومختارش → كارت الاختيار الأول
+                $enrolled = $user->enrolledTeachers()->orderBy('name')->get();
+                if ($enrolled->count() > 1 && ! currentTeacher($user)) {
+                    return redirect()->route('admin.enroll.pick');
+                }
+                $teacher = currentTeacher($user);
                 $grade = $user->grade;
                 $submittedAssignmentIds = \App\Models\AssignmentSubmission::where('student_id', $user->id)->pluck('assignment_id');
                 $insight = $this->insights->profile($user->id);
                 return view('dashboard.student', [
+                    'teacher' => $teacher,
                     'stats' => [
                         'courses' => Course::where('grade', $grade)->count(),
                         'assignments' => Assignment::where('grade', $grade)->count(),
